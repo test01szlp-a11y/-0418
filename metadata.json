@@ -1,0 +1,6 @@
+{
+  "name": "AccoBot - 代账公司数字员工",
+  "description": "针对代账公司设计的企业微信数字员工管理系统，提供自动开票咨询、资料收集、税金测算及申报提醒全流程协作。",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
