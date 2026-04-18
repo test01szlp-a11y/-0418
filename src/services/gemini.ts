@@ -42,15 +42,15 @@ export const generateSummaryVideo = async (summary: string) => {
   }
 };
 
-export const generateDemoVideo = async (clientName: string) => {
+export const generateDemoVideo = async (clientName: string, chatHistory: string) => {
   try {
     const operation = await ai.models.generateVideos({
       model: 'veo-3.1-fast-generate-preview',
-      prompt: `A UI demo showing a smartphone screen with an Enterprise WeChat chat group interface. A digital bot named AccoBot is interacting with a client named ${clientName}, automatically processing invoice requests and displaying sleek financial dashboard snippets within the chat. High-tech, clean minimalism aesthetic, professional motion graphics.`,
+      prompt: `A dynamic screen recording demo of a mobile business app. It shows an automated chat flow between a client named ${clientName} and a digital assistant. The video shows the chat history: ${chatHistory.substring(0, 500)}. It features sleek animations of invoice generation, document classification, and tax calculation results popping up in a modern, minimal UI. Cinematic lightning, 4k, professional tech demo style.`,
       config: {
         numberOfVideos: 1,
         resolution: '1080p',
-        aspectRatio: '9:16' // Portrait for phone demo
+        aspectRatio: '9:16'
       }
     });
     return operation;

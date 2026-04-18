@@ -108,6 +108,64 @@ export default function App() {
     return map[status];
   };
 
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+
+  const startFullAutoDemo = async () => {
+    if (!activeCustomer) return;
+    setIsAutoPlaying(true);
+    setMessages([]);
+    
+    const steps = [
+      // 场景 1: 开票
+      { sender: 'customer', name: activeCustomer.contact, text: `AccoBot，帮我开一张 ${activeCustomer.name} 的 5000 元设计费发票。` },
+      { sender: 'bot', name: 'AccoBot', text: '收到！正在调取您的公司开票抬头... 确认无误，发票已自动开具并发送至您的邮箱。' },
+      
+      // 场景 2: 资料催收
+      { sender: 'bot', name: 'AccoBot', text: '顺便提醒一下，本月的银行对账单和工资表还没上传。请问现在方便提供吗？' },
+      { sender: 'customer', name: activeCustomer.contact, text: '好的，刚才已经补充上传了，你检查一下。' },
+      { sender: 'bot', name: 'AccoBot', text: '收到！系统已自动对上传的图片进行识别、分类并归档。目前资料收集完整度：100%。' },
+      
+      // 场景 3: 税金测算
+      { sender: 'customer', name: activeCustomer.contact, text: '资料全了，那帮我算一下这月的税大概多少？' },
+      { sender: 'bot', name: 'AccoBot', text: '正在基于本月已识别的进项与销项数据进行精算... 计算完成。本月预计应缴增值税：¥1,240.50。' },
+      { sender: 'bot', name: 'AccoBot', text: '您可以点击顶部“生成经营周报”获取详细的可视化分析。' },
+    ];
+
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      await new Promise(resolve => setTimeout(resolve, i === 0 ? 500 : 2000));
+      
+      // 模拟业务逻辑对状态的影响
+      if (i === 2) { // 资料催收开始
+        setCustomers(prev => prev.map(c => c.id === activeCustomer.id ? { ...c, status: 'collecting' } : c));
+      }
+      if (i === 5) { // 资料收集完成
+        setCustomers(prev => prev.map(c => c.id === activeCustomer.id ? { ...c, docsReceived: { invoice: true, bank: true, salary: true }, progress: 65 } : c));
+      }
+      if (i === 7) { // 税金测算完成
+        setCustomers(prev => prev.map(c => c.id === activeCustomer.id ? { ...c, status: 'calculating', progress: 90 } : c));
+      }
+
+      const msg: Message = {
+        id: Date.now().toString() + Math.random(),
+        sender: step.sender as any,
+        senderName: step.name,
+        content: step.text,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, msg]);
+      if (step.sender === 'customer') {
+        setIsBotTyping(true);
+        await new Promise(resolve => setTimeout(resolve, 800));
+        setIsBotTyping(false);
+      }
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setIsAutoPlaying(false);
+    handleGenVideo('demo');
+  };
+
   const handleGenVideo = (type: 'summary' | 'demo') => {
     setVideoStatus({ status: 'generating', type });
     setTimeout(() => {
@@ -271,11 +329,19 @@ export default function App() {
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
+                        {!isAutoPlaying && (
+                          <button 
+                            onClick={startFullAutoDemo}
+                            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-100"
+                          >
+                            <ArrowRight size={14} className="animate-pulse" /> 全自动流程演示
+                          </button>
+                        )}
                         <button 
                           onClick={() => handleGenVideo('demo')}
                           className="flex items-center gap-2 px-4 py-2 bg-[#F1F5F9] text-[#2563EB] rounded-lg text-xs font-bold hover:bg-[#E2E8F0] transition-colors border border-[#DBEAFE]"
                         >
-                          <Video size={14} /> 生成演示视频
+                          <Video size={14} /> 生成演示
                         </button>
                         <button 
                           onClick={() => handleGenVideo('summary')}
@@ -329,8 +395,9 @@ export default function App() {
                           type="text" 
                           value={inputText}
                           onChange={(e) => setInputText(e.target.value)}
-                          placeholder="给客户回复或发出指令..."
+                          placeholder={isAutoPlaying ? "正在演示自动化流程..." : "给客户回复或发出指令..."}
                           onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                          disabled={isAutoPlaying}
                           className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-3"
                         />
                         <button 
