@@ -25,37 +25,39 @@ import {
   Loader2,
   MoreVertical,
   X,
-  Download
+  Download,
+  Lock,
+  Unlock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { generateBotResponse } from './services/gemini';
 import type { Customer, Message, BusinessStatus, TaxData } from './types';
 
 // Mock Data
-const BOT_AVATAR = 'https://images.unsplash.com/photo-1593508512255-86ab42a8e620?w=200&h=200&fit=crop&q=80';
+const BOT_AVATAR = 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=200&h=200&fit=crop&q=80';
 
 const INITIAL_CUSTOMERS: Customer[] = [
-  { id: '1', name: '智点科技有限公司', industry: '互联网/广告', contact: '张总', status: 'wait_info', progress: 10, docsReceived: { invoice: false, bank: false, salary: false }, lastMessage: '我想开个票', avatar: 'https://picsum.photos/seed/zhangsan/100/100' },
-  { id: '2', name: '丰收餐饮管理公司', industry: '餐饮/零售', contact: '李四', status: 'collecting', progress: 45, docsReceived: { invoice: true, bank: false, salary: true }, lastMessage: '流水还没拉出来', avatar: 'https://picsum.photos/seed/lisi/100/100' },
-  { id: '3', name: '蓝图建筑工程中心', industry: '工程/设计', contact: '王五', status: 'calculating', progress: 75, docsReceived: { invoice: true, bank: true, salary: true }, lastMessage: '这月税大概多少？', avatar: 'https://picsum.photos/seed/wangwu/100/100' },
-  { id: '4', name: '盛大物流运输专线', industry: '物流/运输', contact: '刘工', status: 'filing', progress: 90, docsReceived: { invoice: true, bank: true, salary: true }, avatar: 'https://picsum.photos/seed/logistics/100/100' },
-  { id: '5', name: '悦享优选商贸有限公司', industry: '电商/商贸', contact: '陈经理', status: 'paid', progress: 100, docsReceived: { invoice: true, bank: true, salary: true }, avatar: 'https://picsum.photos/seed/trade/100/100' },
-  { id: '6', name: '顶峰装饰设计工作室', industry: '建筑/装饰', contact: '周工', status: 'manual', progress: 65, docsReceived: { invoice: true, bank: false, salary: true }, avatar: 'https://picsum.photos/seed/design/100/100' },
-  { id: '7', name: '恒生医药连锁有限公司', industry: '医疗/医药', contact: '赵总', status: 'collecting', progress: 30, docsReceived: { invoice: false, bank: true, salary: false }, avatar: 'https://picsum.photos/seed/medical/100/100' },
-  { id: '8', name: '天行教育培训中心', industry: '教育/培训', contact: '孙老师', status: 'calculating', progress: 80, docsReceived: { invoice: true, bank: true, salary: true }, avatar: 'https://picsum.photos/seed/edu/100/100' },
-  { id: '9', name: '绿洲园林绿化公司', industry: '园林/环境', contact: '林经理', status: 'wait_info', progress: 5, docsReceived: { invoice: false, bank: false, salary: false }, avatar: 'https://picsum.photos/seed/garden/100/100' },
-  { id: '10', name: '金色年华咨询服务', industry: '专业服务/咨询', contact: '郑总', status: 'filing', progress: 95, docsReceived: { invoice: true, bank: true, salary: true }, avatar: 'https://picsum.photos/seed/consult/100/100' },
-  { id: '11', name: '迅捷电子五金厂', industry: '制造/硬件', contact: '黄厂长', status: 'paid', progress: 100, docsReceived: { invoice: true, bank: true, salary: true }, avatar: 'https://picsum.photos/seed/factory/100/100' },
-  { id: '12', name: '极味坊食品贸易', industry: '食品/贸易', contact: '吴总', status: 'collecting', progress: 50, docsReceived: { invoice: true, bank: true, salary: false }, avatar: 'https://picsum.photos/seed/food/100/100' },
+  { id: '1', name: '智点科技 张总', industry: '互联网/广告', contact: '张总', status: 'wait_info', progress: 10, docsReceived: { invoice: false, bank: false, salary: false }, lastMessage: '我想开个票', avatar: 'https://picsum.photos/seed/zhangsan/100/100' },
+  { id: '2', name: '丰收餐饮 李总', industry: '餐饮/零售', contact: '李总', status: 'collecting', progress: 45, docsReceived: { invoice: true, bank: false, salary: true }, lastMessage: '流水还没拉出来', avatar: 'https://picsum.photos/seed/lisi/100/100' },
+  { id: '3', name: '蓝图建筑 王工', industry: '工程/设计', contact: '王工', status: 'calculating', progress: 75, docsReceived: { invoice: true, bank: true, salary: true }, lastMessage: '这月税大概多少？', avatar: 'https://picsum.photos/seed/wangwu/100/100' },
+  { id: '4', name: '盛大物流 刘总', industry: '物流/运输', contact: '刘总', status: 'filing', progress: 90, docsReceived: { invoice: true, bank: true, salary: true }, avatar: 'https://picsum.photos/seed/logistics/100/100' },
+  { id: '5', name: '悦享商贸 陈经理', industry: '电商/商贸', contact: '陈经理', status: 'paid', progress: 100, docsReceived: { invoice: true, bank: true, salary: true }, avatar: 'https://picsum.photos/seed/trade/100/100' },
+  { id: '6', name: '顶峰装饰 周工', industry: '建筑/装饰', contact: '周工', status: 'manual', progress: 65, docsReceived: { invoice: true, bank: false, salary: true }, avatar: 'https://picsum.photos/seed/design/100/100' },
+  { id: '7', name: '恒生医药 赵总', industry: '医疗/医药', contact: '赵总', status: 'collecting', progress: 30, docsReceived: { invoice: false, bank: true, salary: false }, avatar: 'https://picsum.photos/seed/medical/100/100' },
+  { id: '8', name: '天行教育 孙老师', industry: '教育/培训', contact: '孙老师', status: 'calculating', progress: 80, docsReceived: { invoice: true, bank: true, salary: true }, avatar: 'https://picsum.photos/seed/edu/100/100' },
+  { id: '9', name: '绿洲园林 林经理', industry: '园林/环境', contact: '林经理', status: 'wait_info', progress: 5, docsReceived: { invoice: false, bank: false, salary: false }, avatar: 'https://picsum.photos/seed/garden/100/100' },
+  { id: '10', name: '金色年华 郑总', industry: '专业服务/咨询', contact: '郑总', status: 'filing', progress: 95, docsReceived: { invoice: true, bank: true, salary: true }, avatar: 'https://picsum.photos/seed/consult/100/100' },
+  { id: '11', name: '迅捷电子 黄厂长', industry: '制造/硬件', contact: '黄厂长', status: 'paid', progress: 100, docsReceived: { invoice: true, bank: true, salary: true }, avatar: 'https://picsum.photos/seed/factory/100/100' },
+  { id: '12', name: '极味坊食品 吴总', industry: '食品/贸易', contact: '吴总', status: 'collecting', progress: 50, docsReceived: { invoice: true, bank: true, salary: false }, avatar: 'https://picsum.photos/seed/food/100/100' },
 ];
 
 const INITIAL_MESSAGES: Message[] = [
-  { id: '1', sender: 'customer', senderName: '张总@智点科技', content: 'AccoBot，我们要开张票，3500块钱的咨询费。', timestamp: new Date(Date.now() - 1000 * 60 * 30), avatar: 'https://picsum.photos/seed/zhangsan/100/100' },
-  { id: '2', sender: 'bot', senderName: 'AccoBot', content: '好的，系统查询到您本月开票额度还剩 5000.00 元。请提供您的开票信息：购方名称、开票商品、金额信息。', timestamp: new Date(Date.now() - 1000 * 60 * 29), avatar: BOT_AVATAR },
+  { id: '1', sender: 'customer', senderName: '智点科技 张总', content: '张老师，我们要开张票，3500块钱的咨询费。', timestamp: new Date(Date.now() - 1000 * 60 * 30), avatar: 'https://picsum.photos/seed/zhangsan/100/100' },
+  { id: '2', sender: 'bot', senderName: '财税顾问张老师', content: '好的，系统查询到您本月开票额度还剩 5000.00 元。请提供您的开票信息：购方名称、开票商品、金额信息。', timestamp: new Date(Date.now() - 1000 * 60 * 29), avatar: BOT_AVATAR },
 ];
 
 export default function App() {
-  const [view, setView] = useState<'dashboard' | 'chat' | 'docs' | 'tax' | 'workbench' | 'settings'>('workbench');
+  const [view, setView] = useState<'dashboard' | 'chat' | 'docs' | 'tax' | 'workbench' | 'settings' | 'monitoring'>('workbench');
   const [activeCustomer, setActiveCustomer] = useState<Customer | null>(null);
   const [customers, setCustomers] = useState<Customer[]>(INITIAL_CUSTOMERS);
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
@@ -65,6 +67,7 @@ export default function App() {
     manual: 5
   });
   const [dashboardFilter, setDashboardFilter] = useState<'all' | 'manual'>('all');
+  const [monitoringFilter, setMonitoringFilter] = useState<'all' | 'manual'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([]);
   const [inputText, setInputText] = useState('');
@@ -90,6 +93,12 @@ export default function App() {
 
     setMessages(prev => [...prev, newMsg]);
     setInputText('');
+
+    if (activeCustomer?.isTakenOver) {
+      // Manual takeover mode - do not auto reply
+      return;
+    }
+
     setIsBotTyping(true);
 
     const botReplyRaw = await generateBotResponse(inputText, `正在处理 ${activeCustomer?.name || '一个新客户'} 的请求。`);
@@ -99,7 +108,7 @@ export default function App() {
     const botMsg: Message = {
       id: (Date.now() + 1).toString(),
       sender: 'bot',
-      senderName: 'AccoBot',
+      senderName: '财税顾问张老师',
       avatar: BOT_AVATAR,
       content: botReply,
       timestamp: new Date(),
@@ -143,6 +152,104 @@ export default function App() {
 
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
 
+  const startMonitoringDemo = async () => {
+    setIsAutoPlaying(true);
+    setView('monitoring');
+    setMonitoringFilter('all');
+    
+    // 1. Pick target customer
+    const targetId = '2'; // 丰收餐饮
+    const target = customers.find(c => c.id === targetId);
+    if (!target) return;
+
+    setActiveCustomer(target);
+    setMessages([]);
+    await new Promise(r => setTimeout(r, 1000));
+
+    const demoSteps = [
+      // --- 阶段 1: 开票 ---
+      { sender: 'customer', text: '张老师，帮我开张发票。' },
+      { sender: 'bot', text: '好的，请提供您的开票需求：【购方名称】、【开票商品】和【金额信息】。' },
+      { sender: 'customer', text: '抬头：丰收餐饮\n内容：*服务费\n金额：2000元' },
+      { sender: 'bot', text: '已为您提取开票信息：\n- 购方名称：丰收餐饮\n- 金额：¥2,000.00\n确认无误请回复“确认”。' },
+      { sender: 'customer', text: '确认' },
+      { sender: 'bot', text: '✅ 开票成功！电子发票已发送至您的邮箱。', isInvoice: true },
+
+      // --- 阶段 2: 资料催收 ---
+      { sender: 'bot', text: `${target.contact}您好，系统识别到“${target.name.split(' ')[0]}”本月的银行流水尚未上传。为了不影响申报，请及时提供。` },
+      { sender: 'customer', text: '好的，刚导出来的，发给你。' },
+      { sender: 'bot', text: '收到！系统正在进行 OCR 识别... ✅ 资料已入库。' },
+
+      // --- 阶段 3: 税金确认 ---
+      { sender: 'bot', text: '【税金确认】基于本月数据，预计应交增值税：¥120.00。确认无误请回复“确认”，我将为您申报。' },
+      { sender: 'customer', text: '确认，申报吧。' },
+      { sender: 'bot', text: '🚀 申报已提交！正在等待税务局反馈结果...' },
+
+      // --- 阶段 4: 扣款确认 ---
+      { sender: 'bot', text: '【缴款提醒】您的申报已审核通过。本月应缴税金共计 ¥120.00，请回复“确认缴款”以发起划扣。' },
+      { sender: 'customer', text: '确认缴款' },
+      { sender: 'bot', text: '🔓 扣款成功！税务工作已圆满完成。' },
+
+      // --- 阶段 5: 风险触发 - 关键缓冲回复 ---
+      { sender: 'customer', text: '张老师，最近生意太难做了，有没有什么办法能尽可能少交点税？' },
+      { sender: 'bot', text: '稍等下，我确认下您企业当前的情况，稍后回复您。', isBuffer: true },
+    ];
+
+    for (let i = 0; i < demoSteps.length; i++) {
+      const step = demoSteps[i];
+      
+      // 模拟状态变更
+      if (step.sender === 'customer') {
+        setIsBotTyping(true);
+        await new Promise(r => setTimeout(r, 800));
+        setIsBotTyping(false);
+      }
+
+      const msg: Message = {
+        id: Date.now().toString() + i,
+        sender: step.sender as any,
+        senderName: step.sender === 'bot' ? '财税顾问张老师' : target.contact,
+        avatar: step.sender === 'bot' ? BOT_AVATAR : target.avatar,
+        content: step.text,
+        timestamp: new Date(),
+        isInvoice: (step as any).isInvoice
+      };
+
+      setMessages(prev => [...prev, msg]);
+      setCustomers(prev => prev.map(c => c.id === targetId ? { ...c, lastMessage: step.text } : c));
+
+      // 如果是缓冲回复，则触发预警信号并切换到风险监控
+      if ((step as any).isBuffer) {
+        await new Promise(r => setTimeout(r, 1000));
+        setCustomers(prev => prev.map(c => c.id === targetId ? { ...c, status: 'manual' } : c));
+        setMonitoringFilter('manual');
+        // 等待专家接管
+        await new Promise(r => setTimeout(r, 2500));
+        
+        // 自动演示中的人工接管模拟
+        setCustomers(prev => prev.map(c => c.id === targetId ? { ...c, isTakenOver: true } : c));
+        setActiveCustomer(prev => prev ? { ...prev, isTakenOver: true, status: 'manual' } : null);
+        
+        await new Promise(r => setTimeout(r, 1200));
+        
+        // 专家深度接管回复
+        const expertMsg: Message = {
+          id: (Date.now() + 99).toString(),
+          sender: 'bot',
+          senderName: '财税顾问张老师 (专家接管)',
+          avatar: BOT_AVATAR,
+          content: '您好，针对您提到的经营瓶颈，我作为专家介入。合规降本是我们的原则。我们将全面扫描您的进项扣除率，并核实研发费用加计扣除等专项政策是否应纳未纳。请不要私自操作，我已安排专家助理为您制定《合规财税优化路线图》。',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, expertMsg]);
+      }
+
+      await new Promise(r => setTimeout(r, 1800));
+    }
+
+    setIsAutoPlaying(false);
+  };
+
   const startFullAutoDemo = async () => {
     if (!activeCustomer) return;
     setIsAutoPlaying(true);
@@ -150,29 +257,29 @@ export default function App() {
     
     const steps = [
       // 场景 1: 开票
-      { sender: 'customer', name: activeCustomer.contact, text: 'AccoBot，帮我开张发票。' },
-      { sender: 'bot', name: 'AccoBot', text: '好的，系统查询到您本月开票额度还剩 5000.00 元。请提供您的开票需求：【购方名称】、【开票商品】和【金额信息】。' },
+      { sender: 'customer', name: activeCustomer.contact, text: '张老师，帮我开张发票。' },
+      { sender: 'bot', name: '财税顾问张老师', text: '好的，系统查询到您本月开票额度还剩 5000.00 元。请提供您的开票需求：【购方名称】、【开票商品】和【金额信息】。' },
       { sender: 'customer', name: activeCustomer.contact, text: `抬头：${activeCustomer.name}\n内容：*设计服务*设计费\n金额：5000元` },
-      { sender: 'bot', name: 'AccoBot', text: '已为您提取开票信息：\n- 购方名称：' + activeCustomer.name + '\n- 开票商品：*设计服务*设计费\n- 金额：¥5,000.00\n以上信息确认无误请回复“确认”，我将为您提交开票。' },
+      { sender: 'bot', name: '财税顾问张老师', text: '已为您提取开票信息：\n- 购方名称：' + activeCustomer.name + '\n- 开票商品：*设计服务*设计费\n- 金额：¥5,000.00\n以上信息确认无误请回复“确认”，我将为您提交开票。' },
       { sender: 'customer', name: activeCustomer.contact, text: '确认无误。' },
-      { sender: 'bot', name: 'AccoBot', text: '正在提交系统开票... ✅ 开票成功！增值税电子普通发票已发送至您的预留邮箱，请查收。', isInvoice: true },
+      { sender: 'bot', name: '财税顾问张老师', text: '正在提交系统开票... ✅ 开票成功！增值税电子普通发票已发送至您的预留邮箱，请查收。', isInvoice: true },
       
       // 场景 2: 月底资料催收 (4月25号)
-      { sender: 'bot', name: 'AccoBot', text: '【月底提醒】张总您好，今天是 4 月 25 号，系统识别到“智点科技”本月的工资表和银行流水尚未上传。为了不影响下月初的纳税申报，请现在提供一下，好吗？' },
+      { sender: 'bot', name: '财税顾问张老师', text: `【月底提醒】${activeCustomer.contact}您好，今天是 4 月 25 号，系统识别到“${activeCustomer.name.split(' ')[0]}”本月的工资表和银行流水尚未上传。为了不影响下月初的纳税申报，请现在提供一下，好吗？` },
       { sender: 'customer', name: activeCustomer.contact, text: '好的，工资表和流水截图发你，你核对一下。' },
-      { sender: 'bot', name: 'AccoBot', text: '收到！系统正在进行 OCR 识别与归档... ✅ 资料已确认并入库。目前所有申报必备资料已收集完毕。' },
+      { sender: 'bot', name: '财税顾问张老师', text: '收到！系统正在进行 OCR 识别与归档... ✅ 资料已确认并入库。目前所有申报必备资料已收集完毕。' },
       
       // 场景 3: 月初申报确认 (5月1号)
-      { sender: 'bot', name: 'AccoBot', text: '【申报提醒】张总早！今天是 5 月 1 号。基于您 4 月份的经营数据，系统精算结果如下：\n- 本月销项税额：1,000.00 元\n- 已认证进项税额：500.00 元\n- 预计应交增值税：500.00 元\n数据确认无误后请回复“确认”，系统将自动为您发起税务申报。' },
+      { sender: 'bot', name: '财税顾问张老师', text: `【申报提醒】${activeCustomer.contact}早！今天是 5 月 1 号。基于您 4 月份的经营数据，系统精算结果如下：\n- 本月销项税额：1,000.00 元\n- 已认证进项税额：500.00 元\n- 预计应交增值税：500.00 元\n数据确认无误后请回复“确认”，系统将自动为您发起税务申报。` },
       { sender: 'customer', name: activeCustomer.contact, text: '没问题，确认。' },
-      { sender: 'bot', name: 'AccoBot', text: '收到指令，系统正在连接电子税务局进行全自动化申报... 🚀 申报已成功提交！税金缴纳通知稍后将通过系统推送给您。' },
-      { sender: 'bot', name: 'AccoBot', text: '【缴款提醒】张总，本月应交税金明细已生成，请核对并及时操作扣款：\n- 增值税：500.00 元\n- 印花税：10.00 元\n- 个人所得税：200.00 元\n- 企业所得税：300.00 元\n共计：1,010.00 元。内容核对无误请回复“确认缴款”，我将为您发起支付请求。' },
+      { sender: 'bot', name: '财税顾问张老师', text: '收到指令，系统正在连接电子税务局进行全自动化申报... 🚀 申报已成功提交！税金缴纳通知稍后将通过系统推送给您。' },
+      { sender: 'bot', name: '财税顾问张老师', text: `【缴款提醒】${activeCustomer.contact}，本月应交税金明细已生成，请核对并及时操作扣款：\n- 增值税：500.00 元\n- 印花税：10.00 元\n- 个人所得税：200.00 元\n- 企业所得税：300.00 元\n共计：1,010.00 元。内容核对无误请回复“确认缴款”，我将为您发起支付请求。` },
       { sender: 'customer', name: activeCustomer.contact, text: '确认缴款' },
-      { sender: 'bot', name: 'AccoBot', text: '收到，正在连接国库支付系统... ⚙️ 支付请求发送成功，正在等待验证... 🔓 扣款成功！' },
+      { sender: 'bot', name: '财税顾问张老师', text: '收到，正在连接国库支付系统... ⚙️ 支付请求发送成功，正在等待验证... 🔓 扣款成功！' },
       { 
         sender: 'bot', 
-        name: 'AccoBot', 
-        text: '张总，这是电子税务局返回的《税收完税证明》（电子版），请查收。本月税务工作已全部圆满完成。',
+        name: '财税顾问张老师', 
+        text: `${activeCustomer.contact}，这是电子税务局返回的《税收完税证明》（电子版），请查收。本月税务工作已全部圆满完成。`,
         image: 'https://images.unsplash.com/photo-1554224155-1696413575b3?w=500&h=350&fit=crop&q=80',
         isReceipt: true
       },
@@ -291,9 +398,9 @@ export default function App() {
       const botMsg: Message = {
         id: Date.now().toString() + Math.random(),
         sender: 'bot',
-        senderName: 'AccoBot',
+        senderName: '财税顾问张老师',
         avatar: BOT_AVATAR,
-        content: `【资料催收】${first.contact}您好，系统检测到“${first.name}”本月的资料尚不完整（缺少部分流水/发票），请您核对并尽快在群内上传，谢谢！`,
+        content: `【资料催收】${first.contact}您好，我刚核对了账目，“${first.name}”本月的资料还缺一部分（主要是流水和发票），麻烦您抽空发到群里，我这边好尽快给您入账。`,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, botMsg]);
@@ -318,14 +425,15 @@ export default function App() {
           <div className="w-8 h-8 bg-[#2563EB] rounded-[6px] flex items-center justify-center flex-shrink-0">
             <TrendingUp className="text-white w-5 h-5" />
           </div>
-          <span className="font-extrabold text-[18px] hidden lg:block tracking-tight text-[#1E293B]">智账数字员工</span>
+          <span className="font-extrabold text-[18px] hidden lg:block tracking-tight text-[#1E293B]">智账专家后台</span>
         </div>
 
         <div className="flex-1 space-y-1">
           <NavItem icon={<Users size={20} />} label="客户看板" active={view === 'dashboard'} onClick={() => setView('dashboard')} />
-          <NavItem icon={<TrendingUp size={20} />} label="AI 工作台" active={view === 'workbench'} onClick={() => setView('workbench')} />
+          <NavItem icon={<Activity size={20} />} label="监控看板" active={view === 'monitoring'} onClick={() => setView('monitoring')} />
+          <NavItem icon={<TrendingUp size={20} />} label="记账工作台" active={view === 'workbench'} onClick={() => setView('workbench')} />
           <NavItem icon={<MessageSquare size={20} />} label="协作会话" active={view === 'chat'} onClick={() => setView('chat')} />
-          <NavItem icon={<FileText size={20} />} label="AI 服务工作台" active={view === 'docs'} onClick={() => setView('docs')} />
+          <NavItem icon={<FileText size={20} />} label="服务工作台" active={view === 'docs'} onClick={() => setView('docs')} />
           <NavItem icon={<PieChart size={20} />} label="税金分析" active={view === 'tax'} onClick={() => setView('tax')} />
         </div>
 
@@ -347,8 +455,8 @@ export default function App() {
             >
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                  <h1 className="text-3xl font-extrabold tracking-tight text-[#1E293B]">AI 记账工作台</h1>
-                  <p className="text-slate-500 mt-2">数字员工实时记账看板，全链路自动化监控</p>
+                  <h1 className="text-3xl font-extrabold tracking-tight text-[#1E293B]">财税专家工作台</h1>
+                  <p className="text-slate-500 mt-2">财税顾问实时服务看板，全链路服务监控</p>
                 </div>
                 <div className="flex gap-3">
                   <button 
@@ -366,7 +474,7 @@ export default function App() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <WorkbenchCard 
-                  title="数字员工已完成" 
+                  title="专家已完成" 
                   count={workbenchMetrics.completed} 
                   icon={<CheckCircle2 size={24} className="text-emerald-500" />} 
                   color="emerald" 
@@ -380,7 +488,7 @@ export default function App() {
                   description="流水同步、OCR识别及精算中"
                 />
                 <WorkbenchCard 
-                  title="需要人工介入" 
+                  title="需人工介入" 
                   count={workbenchMetrics.manual} 
                   icon={<Clock size={24} className="text-red-500" />} 
                   color="red" 
@@ -396,11 +504,11 @@ export default function App() {
                 <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
                   <h3 className="text-sm font-bold flex items-center gap-2 text-slate-700">
                     <Activity size={16} className="text-indigo-600" />
-                    数字员工执行流 (Live)
+                    顾问服务执行流 (Live)
                   </h3>
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[10px] text-slate-400 font-medium">系统运行正常</span>
+                    <span className="text-[10px] text-slate-400 font-medium">服务运行正常</span>
                   </div>
                 </div>
                 <div className="divide-y divide-slate-100">
@@ -464,7 +572,7 @@ export default function App() {
                   </h1>
                   <p className="text-slate-500 mt-1">
                     {dashboardFilter === 'manual' 
-                      ? '数字员工无法自动处理，需要财务专家介入支持'
+                      ? '财税专家正在人工处理，请根据进度进行介入支持'
                       : '管理您所有的服务客户及其业务进度'}
                   </p>
                 </div>
@@ -587,30 +695,33 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex h-full"
+              className="flex h-full overflow-hidden"
             >
-              {/* Chat Sidebar */}
-              <div className="w-80 border-r border-slate-200 bg-white flex flex-col">
+              {/* Focused Chat Sidebar */}
+              <div className="w-80 border-r border-slate-200 bg-white flex flex-col flex-shrink-0">
                 <div className="p-6 border-b border-slate-100">
-                  <h2 className="text-lg font-bold">企微群聊</h2>
-                  <p className="text-xs text-slate-400 mt-1">代账数字员工 AccoBot 正为您值守</p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <MessageSquare size={16} className="text-indigo-600" />
+                    <h2 className="text-lg font-bold text-slate-800">在线会话</h2>
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-medium">张老师为您实时在线服务中</p>
                 </div>
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto scrollbar-hide">
                   {customers.map(c => (
                     <div 
                       key={c.id} 
                       onClick={() => setActiveCustomer(c)}
-                      className={`p-4 cursor-pointer border-b border-[#E2E8F0] transition-colors flex gap-3 ${activeCustomer?.id === c.id ? 'bg-[#EFF6FF]' : 'hover:bg-[#F8FAFC]'}`}
+                      className={`p-4 cursor-pointer border-b border-slate-50 transition-all flex gap-3 ${activeCustomer?.id === c.id ? 'bg-indigo-50/50' : 'hover:bg-slate-50'}`}
                     >
                       <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 border border-slate-100 shadow-sm">
                         <img src={c.avatar} alt={c.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start mb-1">
-                          <span className={`font-semibold text-sm truncate ${activeCustomer?.id === c.id ? 'text-[#2563EB]' : 'text-[#1E293B]'}`}>{c.name} 运营群</span>
-                          <span className="text-[10px] text-[#64748B] flex-shrink-0 ml-2">10:24</span>
+                        <div className="flex justify-between items-start mb-0.5">
+                          <span className={`font-bold text-sm truncate ${activeCustomer?.id === c.id ? 'text-indigo-600' : 'text-slate-800'}`}>{c.name}</span>
+                          <span className="text-[10px] text-slate-400 italic">刚刚</span>
                         </div>
-                        <p className="text-xs text-[#64748B] truncate">{c.lastMessage || '暂无对话'}</p>
+                        <p className="text-xs text-slate-400 truncate">{c.lastMessage || '暂无新消息'}</p>
                       </div>
                     </div>
                   ))}
@@ -621,176 +732,83 @@ export default function App() {
               <div className="flex-1 flex flex-col bg-[#F3F5F7]">
                 {activeCustomer ? (
                   <>
-                    <header className="p-4 bg-white border-b border-slate-200 flex justify-between items-center z-10 shadow-sm relative">
+                    <header className="p-4 bg-white border-b border-slate-200 flex justify-between items-center shadow-sm">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 border border-indigo-100 shadow-sm">
+                        <div className="w-10 h-10 rounded-xl overflow-hidden border border-indigo-50 shadow-sm">
                           <img src={activeCustomer.avatar} alt={activeCustomer.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                         </div>
                         <div>
                           <div className="font-bold text-sm tracking-tight">{activeCustomer.name} 财务协作群</div>
-                          <div className="flex items-center gap-1.5 text-[10px] text-emerald-500 font-medium">
-                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                            数字员工 AccoBot 在线中
+                          <div className="text-[10px] text-emerald-500 font-medium flex items-center gap-1">
+                            <span className="w-1 h-1 bg-emerald-500 rounded-full"></span>
+                            顾问张老师在线
                           </div>
                         </div>
                       </div>
-                      {activeCustomer.status === 'manual' && (
-                        <motion.div 
-                          initial={{ opacity: 0, y: -20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full z-20 px-6 py-2 bg-red-600 text-white text-xs font-bold rounded-b-xl shadow-xl flex items-center gap-2 border-x border-b border-red-700"
-                        >
-                          <Bell size={14} className="animate-bounce" />
-                          该客户涉及复杂税务规划，已转人工介入处理
-                          <button 
-                            onClick={() => {
-                              setCustomers(prev => prev.map(c => c.id === activeCustomer.id ? { ...c, status: 'calculating' } : c));
-                            }}
-                            className="ml-4 px-2 py-0.5 bg-white text-red-600 rounded text-[10px] hover:bg-red-50 transition-colors"
-                          >
-                            处理完成
-                          </button>
-                        </motion.div>
-                      )}
-                      <div className="flex items-center gap-4">
-                        {!isAutoPlaying && (
-                          <button 
-                            onClick={startFullAutoDemo}
-                            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-100"
-                          >
-                            <ArrowRight size={14} className="animate-pulse" /> 全自动流程演示
-                          </button>
-                        )}
+                      <div className="flex items-center gap-3">
                         <button 
-                          onClick={() => handleGenVideo('demo')}
-                          className="flex items-center gap-2 px-4 py-2 bg-[#F1F5F9] text-[#2563EB] rounded-lg text-xs font-bold hover:bg-[#E2E8F0] transition-colors border border-[#DBEAFE]"
+                          onClick={() => setCustomers(prev => prev.map(cust => cust.id === activeCustomer.id ? { ...cust, isTakenOver: !cust.isTakenOver } : cust))}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${activeCustomer.isTakenOver ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                         >
-                          <Video size={14} /> 生成演示
+                          {activeCustomer.isTakenOver ? <Lock size={12} /> : <Unlock size={12} />}
+                          {activeCustomer.isTakenOver ? '手动接管中' : '自动响应模式'}
                         </button>
-                        <button 
-                          onClick={() => handleGenVideo('summary')}
-                          className="flex items-center gap-2 px-4 py-2 bg-[#2563EB] text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-100"
-                        >
-                          <TrendingUp size={14} /> 生成经营周报
-                        </button>
-                        <button className="text-slate-400 hover:text-slate-600"><MoreVertical size={20} /></button>
+                        <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors"><MoreVertical size={20} /></button>
                       </div>
                     </header>
 
-                    <div className="flex-1 p-6 overflow-y-auto space-y-4">
+                    <div className="flex-1 p-6 overflow-y-auto space-y-4 scrollbar-hide">
                       {messages.map((m, idx) => (
                         <div key={idx} className={`flex ${m.sender === 'bot' ? 'justify-start' : 'justify-end'} group items-start`}>
                           {m.sender === 'bot' && (
-                            <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 mr-3 ring-2 ring-indigo-100 shadow-sm border border-indigo-200">
+                            <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 mr-2 ring-1 ring-indigo-50">
                               <img src={m.avatar || BOT_AVATAR} alt="Bot" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                             </div>
                           )}
-                          <div className={`max-w-[70%] ${m.sender === 'bot' ? 'bg-white rounded-tr-2xl rounded-br-2xl rounded-bl-2xl shadow-sm border border-[#E2E8F0]' : 'bg-[#2563EB] text-white rounded-tl-2xl rounded-bl-2xl rounded-br-2xl shadow-md'} p-4 text-sm relative`}>
-                            <div className={`text-[10px] mb-1 font-bold ${m.sender === 'bot' ? 'text-[#2563EB]' : 'text-blue-100'}`}>
+                          <div className={`max-w-[70%] ${m.sender === 'bot' ? 'bg-white rounded-tr-xl rounded-br-xl rounded-bl-xl shadow-sm border border-slate-100' : 'bg-indigo-600 text-white rounded-tl-xl rounded-bl-xl rounded-br-xl shadow-md p-3 px-4'} p-3 px-4 text-sm relative`}>
+                            <div className={`text-[9px] mb-1 font-bold ${m.sender === 'bot' ? 'text-indigo-600' : 'text-blue-100'}`}>
                               {m.senderName}
                             </div>
                             <div className="leading-relaxed whitespace-pre-wrap">{m.content}</div>
-                            {m.image && (
-                              <div className="mt-3 rounded-lg overflow-hidden border border-[#E2E8F0] shadow-sm bg-white">
-                                <img src={m.image} alt="Attachment" className="w-full h-auto object-cover max-h-60" referrerPolicy="no-referrer" />
-                                {m.isReceipt && (
-                                  <div className="p-2 bg-slate-50 border-t border-[#E2E8F0] flex justify-between items-center">
-                                    <span className="text-[10px] font-bold text-slate-600">税收完税证明.jpg</span>
-                                    <button className="text-[10px] text-[#2563EB] font-bold hover:underline">查看原图</button>
-                                  </div>
-                                )}
-                              </div>
-                            )}
                             {m.isInvoice && (
-                              <div className="mt-3 p-4 bg-white border border-[#E2E8F0] rounded-lg shadow-sm text-[#1E293B]">
-                                <div className="flex justify-between items-start border-b border-dashed border-[#E2E8F0] pb-2 mb-2">
-                                  <div className="text-[10px] font-bold text-[#2563EB] uppercase">增值税电子普通发票</div>
-                                  <div className="text-[10px] text-[#64748B]">No. 0582491</div>
-                                </div>
-                                <div className="space-y-1">
-                                  <div className="flex justify-between text-[11px]">
-                                    <span className="text-[#64748B]">购方名称：</span>
-                                    <span className="font-bold">{activeCustomer?.name}</span>
-                                  </div>
-                                  <div className="flex justify-between text-[11px]">
-                                    <span className="text-[#64748B]">货物服务：</span>
-                                    <span className="font-bold">*设计服务*设计费</span>
-                                  </div>
-                                  <div className="flex justify-between text-[11px]">
-                                    <span className="text-[#64748B]">合计金额：</span>
-                                    <span className="font-bold text-[#2563EB]">¥5,000.00</span>
-                                  </div>
-                                </div>
-                                <div className="mt-3 pt-2 border-t border-[#E2E8F0] flex justify-between gap-4">
-                                  <button className="text-[10px] text-[#2563EB] font-bold hover:underline flex-1 text-center">点击查看详情</button>
-                                  <button 
-                                    onClick={() => handleDownloadInvoice(activeCustomer?.name || '客户')}
-                                    className="flex items-center justify-center gap-1 text-[10px] text-[#64748B] font-bold hover:text-[#2563EB] transition-colors flex-1"
-                                  >
-                                    <Download size={12} /> 下载发票
-                                  </button>
-                                </div>
+                              <div className="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800">
+                                <div className="text-[9px] font-bold text-indigo-600 border-b border-dashed border-slate-200 mb-2 pb-1">增值税专用发票</div>
+                                <div className="text-[10px] flex justify-between uppercase leading-4 font-mono"><span className="text-slate-500">金额：</span>¥5,000.00</div>
+                                <button className="w-full mt-2 py-1 bg-white border border-slate-200 rounded text-[9px] font-bold text-indigo-600 shadow-sm">下载 PDF</button>
                               </div>
                             )}
-                            <div className={`text-[10px] mt-2 text-right ${m.sender === 'bot' ? 'text-[#64748B]' : 'text-blue-100 opacity-0 group-hover:opacity-100 transition-opacity'}`}>
+                            <div className={`text-[8px] mt-2 text-right opacity-60 ${m.sender === 'bot' ? 'text-slate-500' : 'text-white'}`}>
                               {m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </div>
                           </div>
-                          {m.sender !== 'bot' && (
-                            <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 ml-3 ring-2 ring-blue-100 shadow-sm border border-blue-200">
-                              <img src={m.avatar || `https://picsum.photos/seed/default/100/100`} alt="User" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                            </div>
-                          )}
                         </div>
                       ))}
-                      {isBotTyping && (
-                        <div className="flex justify-start items-start">
-                          <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 mr-3 ring-2 ring-indigo-100 shadow-sm border border-indigo-200">
-                            <img src={BOT_AVATAR} alt="Bot" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                          </div>
-                          <div className="bg-white rounded-tr-xl rounded-br-xl rounded-bl-xl p-4 shadow-sm border border-[#E2E8F0]">
-                            <div className="flex gap-1">
-                              <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 1 }} className="w-1.5 h-1.5 bg-indigo-300 rounded-full"></motion.span>
-                              <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-1.5 h-1.5 bg-indigo-300 rounded-full"></motion.span>
-                              <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-1.5 h-1.5 bg-indigo-300 rounded-full"></motion.span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      {isBotTyping && <div className="flex gap-1 p-2"><div className="w-1 h-1 bg-slate-300 rounded-full animate-bounce"></div><div className="w-1 h-1 bg-slate-300 rounded-full animate-bounce delay-100"></div></div>}
                       <div ref={chatEndRef}></div>
                     </div>
 
-                    <div className="p-4 bg-white border-t border-slate-200">
-                      <div className="flex items-center gap-2 bg-slate-50 rounded-xl p-2 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                    <div className="p-4 bg-white border-t border-slate-100">
+                      <div className="flex items-center gap-2 bg-slate-50 rounded-xl p-2 border border-slate-200">
                         <input 
                           type="text" 
                           value={inputText}
                           onChange={(e) => setInputText(e.target.value)}
-                          placeholder={isAutoPlaying ? "正在演示自动化流程..." : "给客户回复或发出指令..."}
+                          placeholder="给客户回复..."
                           onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                          disabled={isAutoPlaying}
-                          className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-3"
+                          className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-1"
                         />
-                        <button 
-                          onClick={handleSendMessage}
-                          className="w-10 h-10 bg-indigo-600 text-white rounded-lg flex items-center justify-center hover:bg-indigo-700 transition-all active:scale-95"
-                        >
-                          <Send size={18} />
-                        </button>
+                        <button onClick={handleSendMessage} className="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center hover:bg-indigo-700 transition-all"><Send size={14} /></button>
                       </div>
-                      <div className="flex gap-3 mt-3 px-1">
-                        <QuickAction label="代开票" onClick={() => setInputText('我想开张票，帮我处理一下。')} />
-                        <QuickAction label="催收资料" onClick={() => setInputText('本月会计资料（银行流水、发票、工资表）记得上传哦')} />
-                        <QuickAction label="发送税金确认" onClick={() => setInputText('测算结果已出：本月预计交增值税 452.12 元，请查收')} />
+                      <div className="flex gap-2 mt-3 px-1">
+                        <QuickAction label="发送发票" onClick={() => setInputText('发票已开出，请查收。')} />
+                        <QuickAction label="催发票" onClick={() => setInputText('老板，上月的进项发票记得在小程序上传一下哦')} />
                       </div>
                     </div>
                   </>
                 ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-10">
-                    <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                      <MessageSquare size={32} />
-                    </div>
-                    <p className="text-sm">请选择一个客户会话开始协作</p>
+                  <div className="flex-1 flex flex-col items-center justify-center text-slate-400 bg-white">
+                    <MessageSquare size={32} className="mb-4 opacity-20" />
+                    <p className="text-sm font-medium">选择一个协作群开启专业支持</p>
                   </div>
                 )}
               </div>
@@ -1014,6 +1032,278 @@ export default function App() {
             </motion.div>
           )}
 
+          {view === 'monitoring' && (
+            <motion.div 
+              key="monitoring"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex h-full overflow-hidden"
+            >
+              {/* Left Column: Group List with Risk Indicators */}
+              <div className="w-80 border-r border-slate-200 bg-white flex flex-col flex-shrink-0">
+                <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+                  <div className="flex items-center justify-between mb-1">
+                    <h2 className="text-lg font-bold flex items-center gap-2">
+                      服务监控中
+                      <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                    </h2>
+                    <button 
+                      onClick={startMonitoringDemo}
+                      disabled={isAutoPlaying}
+                      className={`text-[9px] font-bold px-2 py-1 rounded-full border transition-all ${isAutoPlaying ? 'bg-indigo-600 border-indigo-600 text-white animate-pulse' : 'bg-white border-slate-200 text-slate-500 hover:border-indigo-200 hover:text-indigo-600'}`}
+                    >
+                      {isAutoPlaying ? '演示运行中...' : '启动自动演示'}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-bold">全量会话与风险监控</p>
+                </div>
+                
+                <div className="p-3 bg-slate-50 border-b border-slate-200 flex gap-2 overflow-x-auto scrollbar-hide">
+                  <button 
+                    onClick={() => setMonitoringFilter('all')}
+                    className={`px-3 py-1 rounded-full text-[10px] font-bold shadow-sm border whitespace-nowrap transition-all ${monitoringFilter === 'all' ? 'bg-white text-indigo-600 border-indigo-100' : 'bg-transparent text-slate-500 border-transparent hover:bg-slate-100'}`}
+                  >
+                    全部会话
+                  </button>
+                  <button 
+                    onClick={() => setMonitoringFilter('manual')}
+                    className={`px-3 py-1 rounded-full text-[10px] font-bold border whitespace-nowrap transition-all ${monitoringFilter === 'manual' ? 'bg-white text-red-600 border-red-100 shadow-sm' : 'bg-transparent text-slate-500 border-transparent hover:bg-red-50 hover:text-red-600'}`}
+                  >
+                    ⚠️ 风险关注 ({customers.filter(c => c.status === 'manual').length})
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto scrollbar-hide">
+                  {customers
+                    .filter(c => monitoringFilter === 'all' || (monitoringFilter === 'manual' && c.status === 'manual'))
+                    .map(c => (
+                    <div 
+                      key={c.id} 
+                      onClick={() => setActiveCustomer(c)}
+                      className={`p-4 cursor-pointer border-b border-[#E2E8F0] transition-all flex gap-3 relative overflow-hidden ${activeCustomer?.id === c.id ? 'bg-[#EFF6FF]' : 'hover:bg-[#F8FAFC]'}`}
+                    >
+                      {c.status === 'manual' && (
+                        <div className="absolute top-0 right-0 w-12 h-12 overflow-hidden pointer-events-none">
+                          <div className="absolute top-0 right-0 w-16 h-4 bg-red-500 text-[8px] text-white font-bold text-center rotate-45 translate-x-4 translate-y-2 flex items-center justify-center">RISK</div>
+                        </div>
+                      )}
+                      
+                      <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 border border-slate-100 shadow-sm relative">
+                        <img src={c.avatar} alt={c.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        {c.isTakenOver && (
+                          <div className="absolute -bottom-1 -right-1 bg-amber-400 rounded-full p-1 border-2 border-white">
+                            <Lock size={10} className="text-white" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start mb-0.5">
+                          <span className={`font-bold text-sm truncate ${c.status === 'manual' ? 'text-red-600' : (activeCustomer?.id === c.id ? 'text-[#2563EB]' : 'text-[#1E293B]')}`}>{c.name}</span>
+                          <span className="text-[10px] text-[#64748B] flex-shrink-0 ml-1">10:24</span>
+                        </div>
+                        <p className={`text-xs truncate ${c.status === 'manual' ? 'text-red-500 italic' : 'text-[#64748B]'}`}>
+                          {c.status === 'manual' ? '高风险：复杂税务咨询' : (c.lastMessage || '暂无动态')}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Middle Column: Detail & Intervention */}
+              <div className="flex-1 flex flex-col bg-slate-50 border-r border-slate-200">
+                {activeCustomer ? (
+                  <>
+                    <header className="p-4 bg-white border-b border-slate-200 flex justify-between items-center z-10 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm border border-slate-100">
+                          <img src={activeCustomer.avatar} alt={activeCustomer.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        </div>
+                        <div>
+                          <div className="font-bold text-sm">{activeCustomer.name} <span className="text-slate-400 font-normal">| 控制中心</span></div>
+                          <div className={`text-[10px] font-bold ${activeCustomer.isTakenOver ? 'text-amber-500' : 'text-emerald-500'}`}>
+                            {activeCustomer.isTakenOver ? '● 人工深度接管中' : (activeCustomer.status === 'manual' ? '● 存在风险，建议接管' : '● 张老师托管模式')}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex bg-slate-100 p-1 rounded-xl items-center border border-slate-200">
+                        <button 
+                          onClick={() => setCustomers(prev => prev.map(c => c.id === activeCustomer.id ? { ...c, isTakenOver: false } : c))}
+                          className={`px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all ${!activeCustomer.isTakenOver ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}
+                        >
+                          托管
+                        </button>
+                        <button 
+                          onClick={() => setCustomers(prev => prev.map(c => c.id === activeCustomer.id ? { ...c, isTakenOver: true } : c))}
+                          className={`px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1.5 ${activeCustomer.isTakenOver ? 'bg-white text-amber-600 shadow-sm' : 'text-slate-400'}`}
+                        >
+                          <Lock size={12} /> 接管
+                        </button>
+                      </div>
+                    </header>
+
+                    {activeCustomer.status === 'manual' && !activeCustomer.isTakenOver && (
+                      <div className="bg-red-50 border-b border-red-100 px-4 py-2 flex items-center justify-between animate-in slide-in-from-top duration-300">
+                        <div className="flex items-center gap-2">
+                          <Bell size={14} className="text-red-500 animate-bounce" />
+                          <span className="text-[10px] font-bold text-red-700">风险预警：咨询超出 AI 处理边界，请立即人工接管。</span>
+                        </div>
+                        <button 
+                          onClick={() => setCustomers(prev => prev.map(c => c.id === activeCustomer.id ? { ...c, isTakenOver: true } : c))}
+                          className="bg-red-600 text-white text-[9px] font-extrabold px-3 py-1 rounded shadow-lg hover:bg-red-700 transition-colors"
+                        >
+                          立即接管
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="flex-1 p-6 overflow-y-auto space-y-4 scrollbar-hide">
+                      {messages.map((m, idx) => (
+                        <div key={idx} className={`flex ${m.sender === 'bot' ? 'justify-start' : 'justify-end'} group items-start`}>
+                          {m.sender === 'bot' && (
+                            <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 mr-3 ring-2 ring-indigo-50 border border-indigo-100">
+                              <img src={m.avatar || BOT_AVATAR} alt="Bot" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            </div>
+                          )}
+                          <div className={`max-w-[80%] ${m.sender === 'bot' ? 'bg-white rounded-tr-2xl rounded-br-2xl rounded-bl-2xl shadow-sm border border-slate-100' : 'bg-slate-700 text-white rounded-tl-2xl rounded-bl-2xl rounded-br-2xl shadow-md'} p-3 px-4 text-sm relative`}>
+                            <div className={`text-[9px] mb-1 font-bold ${m.sender === 'bot' ? 'text-indigo-600' : 'text-slate-400'}`}>
+                              {m.senderName}
+                            </div>
+                            <div className="leading-relaxed whitespace-pre-wrap">{m.content}</div>
+                            {m.isInvoice && (
+                              <div className="mt-2 p-3 bg-slate-100 border border-slate-200 rounded-lg text-[10px]">
+                                <span className="font-bold text-indigo-600 block mb-1">发票回传节点</span>
+                                <p className="text-slate-500 italic">系统已自动识别需求并回传发票</p>
+                              </div>
+                            )}
+                            <div className={`text-[8px] mt-2 text-right opacity-60 ${m.sender === 'bot' ? 'text-slate-500' : 'text-slate-300'}`}>
+                              {m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      <div ref={chatEndRef}></div>
+                    </div>
+
+                    <div className="p-4 bg-white border-t border-slate-200">
+                      <div className="flex items-center gap-3 bg-slate-50 rounded-2xl p-2.5 border border-slate-200 shadow-inner focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                        <input 
+                          type="text" 
+                          value={inputText}
+                          onChange={(e) => setInputText(e.target.value)}
+                          placeholder="作为专家直接回复或下达指令..."
+                          onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                          className="flex-1 bg-transparent border-none focus:ring-0 text-sm"
+                        />
+                        <button 
+                          onClick={handleSendMessage}
+                          className="w-10 h-10 bg-slate-800 text-white rounded-xl flex items-center justify-center hover:bg-black transition-all shadow-lg active:scale-95"
+                        >
+                          <Send size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-slate-400">
+                    <div className="w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center mb-6">
+                      <Activity size={32} className="opacity-20 translate-y-1" />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-800">全量对话实时中心</h3>
+                    <p className="mt-2 max-w-xs text-sm">选择左侧会话，即可在监控看板中直接进行服务接管或指令下达。</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Intelligence Tools */}
+              <div className="w-80 bg-white flex flex-col flex-shrink-0">
+                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                  <h2 className="text-sm font-bold flex items-center gap-2">
+                    <TrendingUp size={16} className="text-[#2563EB]" />
+                    AI 监控建议
+                  </h2>
+                  <button 
+                    onClick={startMonitoringDemo}
+                    disabled={isAutoPlaying}
+                    className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
+                    title="开启监控演示"
+                  >
+                    <Activity size={14} />
+                  </button>
+                </div>
+
+                {activeCustomer ? (
+                  <div className="p-6 space-y-8 overflow-y-auto flex-1 scrollbar-hide">
+                    <section>
+                      <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">异常深度解析</h3>
+                      {activeCustomer.status === 'manual' ? (
+                        <div className="p-4 bg-red-50 border border-red-100 rounded-2xl">
+                          <p className="text-xs font-bold text-red-600 mb-2 flex items-center gap-2">
+                            <Bell size={14} /> 发现高风险咨询
+                          </p>
+                          <p className="text-[11px] text-red-700 leading-relaxed">
+                            客户追问“如何少交税”，AI 已自动触发断点，建议专家从**研发费用加计扣除**或**税收优惠政策落地**角度提供专业合规建议。
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center gap-3">
+                          <CheckCircle2 size={16} className="text-emerald-500" />
+                          <p className="text-[11px] text-emerald-700 font-medium tracking-tight">暂无异常，张老师健康值勤中</p>
+                        </div>
+                      )}
+                    </section>
+
+                    <section>
+                      <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">快捷流程卡片</h3>
+                      <div className="grid grid-cols-1 gap-3">
+                        <button onClick={() => handleGenVideo('summary')} className="p-4 bg-indigo-50 text-indigo-700 rounded-2xl border border-indigo-100 text-left hover:bg-indigo-100 transition-all flex items-center justify-between group">
+                          <div>
+                            <p className="text-xs font-bold mb-1 flex items-center gap-2"><CreditCard size={14} /> 生成纳税测算</p>
+                            <p className="text-[9px] opacity-70">精准计算增值税与附加税</p>
+                          </div>
+                          <ChevronRight size={14} className="group-hover:translate-x-1" />
+                        </button>
+                        <button className="p-4 bg-slate-50 text-slate-700 rounded-2xl border border-slate-200 text-left hover:bg-slate-100 transition-all flex items-center justify-between group">
+                          <div>
+                            <p className="text-xs font-bold mb-1 flex items-center gap-2"><FileText size={14} /> 发起资料催报</p>
+                            <p className="text-[9px] opacity-70">针对流失凭证进行精准催收</p>
+                          </div>
+                          <ChevronRight size={14} className="group-hover:translate-x-1" />
+                        </button>
+                      </div>
+                    </section>
+
+                    <section>
+                      <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">企业档案摘要</h3>
+                      <div className="bg-slate-900 rounded-2xl p-4 text-white space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] opacity-60">累计已开金额</span>
+                          <span className="text-xs font-bold font-mono">¥48,220.00</span>
+                        </div>
+                        <div className="flex justify-between items-center text-emerald-400">
+                          <span className="text-[10px] opacity-60">本周处理效率</span>
+                          <span className="text-xs font-bold font-mono">+12.4%</span>
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-slate-400 opacity-60">
+                    <TrendingUp size={24} className="mb-4" />
+                    <p className="text-[10px] leading-relaxed mb-6">选定监控目标<br/>开启 AI 热力分析</p>
+                    <button 
+                      onClick={startMonitoringDemo}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-lg"
+                    >
+                      开启监控演示
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
           {view === 'settings' && (
             <motion.div 
               key="settings"
@@ -1024,7 +1314,7 @@ export default function App() {
             >
               <header className="mb-10 text-center">
                 <h1 className="text-3xl font-extrabold tracking-tight">系统通知设置</h1>
-                <p className="text-slate-500 mt-2">配置 AccoBot 数字员工的自动预警与提醒规则</p>
+                <p className="text-slate-500 mt-2">配置财税顾问张老师的自动预警与提醒规则</p>
               </header>
 
               <div className="space-y-6">
@@ -1055,7 +1345,7 @@ export default function App() {
                     <ToggleItem 
                       icon={<MessageSquare size={18} className="text-indigo-500" />}
                       title="客户咨询即时回复" 
-                      description="当客户在群内咨询常见基础问题时，机器人自动拦截并回复"
+                      description="当客户在群内咨询常见基础问题时，顾问张老师自动进行专业回复"
                       defaultChecked={false}
                     />
                   </div>
@@ -1074,7 +1364,7 @@ export default function App() {
                         </div>
                         <div>
                           <p className="text-sm font-bold text-slate-800">企业微信群聊</p>
-                          <p className="text-[10px] text-slate-400">数字员工直接在群内与客户互动</p>
+                          <p className="text-[10px] text-slate-400">财税顾问张老师直接在群内与客户互动</p>
                         </div>
                       </div>
                       <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full uppercase">已激活</span>

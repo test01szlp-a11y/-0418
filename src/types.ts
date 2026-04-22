@@ -14,6 +14,7 @@ export interface Customer {
   };
   lastMessage?: string;
   avatar: string;
+  isTakenOver?: boolean;
 }
 
 export interface Message {
