@@ -70,6 +70,26 @@ export default function App() {
   const [monitoringFilter, setMonitoringFilter] = useState<'all' | 'manual'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([]);
+  const [generatingReportId, setGeneratingReportId] = useState<string | null>(null);
+  const [reportData, setReportData] = useState<any>(null);
+
+  const generateReport = async (customer: Customer) => {
+    setGeneratingReportId(customer.id);
+    await new Promise(r => setTimeout(r, 1500));
+    
+    // Simulate report data
+    const summary = {
+      name: customer.name,
+      month: new Date().getMonth() + 1,
+      invoicing: customer.docsReceived.invoice ? '已开具增值税专用发票 1 张，金额 ¥5,000.00' : '本月无开票需求',
+      docs: customer.docsReceived.bank && customer.docsReceived.salary ? '资料收集已齐备（含流水、工资表）' : '资料尚未齐备，催收中',
+      tax: customer.status === 'calculating' || customer.status === 'filing' || customer.status === 'paid' ? '已完成精准测算，预计纳税 ¥1,010.00' : '测算进行中',
+      delivery: customer.status === 'paid' ? '全流程已闭环，凭证已回传' : '流程处理中'
+    };
+    
+    setReportData(summary);
+    setGeneratingReportId(null);
+  };
   const [inputText, setInputText] = useState('');
   const [isBotTyping, setIsBotTyping] = useState(false);
   const [videoStatus, setVideoStatus] = useState<{ status: 'idle' | 'generating' | 'ready', type: 'summary' | 'demo' }>({ status: 'idle', type: 'summary' });
@@ -172,26 +192,26 @@ export default function App() {
     const demoSteps = [
       // --- 阶段 1: 开票 ---
       { sender: 'customer', text: '张老师，帮我开张发票。' },
-      { sender: 'bot', text: '好的，请提供您的开票需求：【购方名称】、【开票商品】和【金额信息】。' },
-      { sender: 'customer', text: '抬头：丰收餐饮\n内容：*服务费\n金额：2000元' },
-      { sender: 'bot', text: '已为您提取开票信息：\n- 购方名称：丰收餐饮\n- 金额：¥2,000.00\n确认无误请回复“确认”。' },
+      { sender: 'bot', text: '好的，系统查询到您本月开票额度还剩 ¥50,000.00 元。请提供您的开票需求：【购方名称】、【开票商品】和【金额信息】。' },
+      { sender: 'customer', text: `抬头：${target.name.split(' ')[0]}\n内容：*餐饮服务\n金额：2000元` },
+      { sender: 'bot', text: `已为您提取开票信息：\n- 购方名称：${target.name.split(' ')[0]}\n- 内容：*餐饮服务\n- 金额：¥2,000.00\n确认无误请回复“确认”。` },
       { sender: 'customer', text: '确认' },
-      { sender: 'bot', text: '✅ 开票成功！电子发票已发送至您的邮箱。', isInvoice: true },
+      { sender: 'bot', text: '✅ 开票成功！电子发票已同步发送至您的邮箱。', isInvoice: true },
 
       // --- 阶段 2: 资料催收 ---
-      { sender: 'bot', text: `【月底提醒】${target.contact}您好，今天是 ${currentMonth}月 25 号。系统识别到“${target.name.split(' ')[0]}”本月的银行流水尚未上传。为了不影响申报，请及时提供。` },
+      { sender: 'bot', text: `【自动催收】${target.contact}您好，今天是 ${currentMonth}月 25 号。系统监测到“${target.name.split(' ')[0]}”本周期的银行流水尚未归档。为了不影响下月申报，请及时上传。` },
       { sender: 'customer', text: '好的，刚导出来的，发给你。' },
-      { sender: 'bot', text: '收到！系统正在进行 OCR 识别... ✅ 资料已入库。' },
+      { sender: 'bot', text: '收到！Veo 识别引擎正在识别并完成自动归档... ✅ 资料已入库。' },
 
       // --- 阶段 3: 税金确认 ---
-      { sender: 'bot', text: `【申报提醒】${target.contact}早！今天是 ${nextMonth}月 1 号。基于 ${currentMonth}月经营数据，系统精算结果：预计应交增值税：¥120.00。确认无误请回复“确认”，我将为您申报。` },
+      { sender: 'bot', text: `【申报提醒】${target.contact}早！今天是 ${nextMonth}月 1 号。基于 ${currentMonth}月 经营数据，系统精算结果已出：预计应交增值税：¥120.00元。确认无误请回复“确认”，我将自动完成电子税务局申报。` },
       { sender: 'customer', text: '确认，申报吧。' },
-      { sender: 'bot', text: '🚀 申报已提交！正在等待税务局反馈结果...' },
+      { sender: 'bot', text: '🚀 正在连接电子税务局... 申报已成功提交！' },
 
       // --- 阶段 4: 扣款确认 ---
-      { sender: 'bot', text: `【缴款提醒】您的申报已审核通过。${nextMonth}月应缴税金共计 ¥120.00，请回复“确认缴款”以发起划扣。` },
+      { sender: 'bot', text: `【扣款提醒】您的申报已审核通过。${nextMonth}月应缴税金共计 ¥120.00，请回复“确认缴款”以发起在线国库划扣。` },
       { sender: 'customer', text: '确认缴款' },
-      { sender: 'bot', text: '🔓 扣款成功！税务工作已圆满完成。' },
+      { sender: 'bot', text: '🔓 支付成功！本业务周期税务工作已圆满闭环。' },
 
       // --- 阶段 5: 风险触发 - 关键缓冲回复 ---
       { sender: 'customer', text: '张老师，最近生意太难做了，有没有什么办法能尽可能少交点税？' },
@@ -272,17 +292,17 @@ export default function App() {
       { sender: 'bot', name: '财税顾问张老师', text: '正在提交系统开票... ✅ 开票成功！增值税电子普通发票已发送至您的预留邮箱，请查收。', isInvoice: true },
       
       // 场景 2: 月底资料催收
-      { sender: 'bot', name: '财税顾问张老师', text: `【月底提醒】${activeCustomer.contact}您好，今天是 ${currentMonth} 月 25 号，系统识别到“${activeCustomer.name.split(' ')[0]}”本月的工资表和银行流水尚未上传。为了不影响下月初的纳税申报，请现在提供一下，好吗？` },
+      { sender: 'bot', name: '财税顾问张老师', text: `【自动催收】${activeCustomer.contact}您好，今天是 ${currentMonth} 月 25 号，系统监测到“${activeCustomer.name.split(' ')[0]}”本周期的工资表和银行流水尚未归档。为了不影响下月申报，请及时上传。` },
       { sender: 'customer', name: activeCustomer.contact, text: '好的，工资表和流水截图发你，你核对一下。' },
-      { sender: 'bot', name: '财税顾问张老师', text: '收到！系统正在进行 OCR 识别与归档... ✅ 资料已确认并入库。目前所有申报必备资料已收集完毕。' },
+      { sender: 'bot', name: '财税顾问张老师', text: '收到！Veo 识别引擎正在识别与完成自动归档... ✅ 资料已确认并入库。目前所有申报必备资料已收集完毕。' },
       
       // 场景 3: 月初申报确认
-      { sender: 'bot', name: '财税顾问张老师', text: `【申报提醒】${activeCustomer.contact}早！今天是 ${nextMonth} 月 1 号。基于您 ${currentMonth} 月份的经营数据，系统精算结果如下：\n- 本月销项税额：1,000.00 元\n- 已认证进项税额：500.00 元\n- 预计应交增值税：500.00 元\n数据确认无误后请回复“确认”，系统将自动为您发起税务申报。` },
+      { sender: 'bot', name: '财税顾问张老师', text: `【申报提醒】${activeCustomer.contact}早！今天是 ${nextMonth} 月 1 号。基于您 ${currentMonth} 月份的经营数据，系统精算结果已出：\n- 本月销项税额：1,000.00 元\n- 已认证进项税额：500.00 元\n- 预计应交增值税：500.00 元\n数据确认无误后请回复“确认”，我将自动完成电子税务局申报。` },
       { sender: 'customer', name: activeCustomer.contact, text: '没问题，确认。' },
-      { sender: 'bot', name: '财税顾问张老师', text: '收到指令，系统正在连接电子税务局进行全自动化申报... 🚀 申报已成功提交！税金缴纳通知稍后将通过系统推送给您。' },
-      { sender: 'bot', name: '财税顾问张老师', text: `【缴款提醒】${activeCustomer.contact}，本月应交税金明细已生成，请核对并及时操作扣款：\n- 增值税：500.00 元\n- 印花税：10.00 元\n- 个人所得税：200.00 元\n- 企业所得税：300.00 元\n共计：1,010.00 元。内容核对无误请回复“确认缴款”，我将为您发起支付请求。` },
+      { sender: 'bot', name: '财税顾问张老师', text: '收到指令，正在连接电子税务局进行全自动化申报... 🚀 申报已成功提交！' },
+      { sender: 'bot', name: '财税顾问张老师', text: `【扣款提醒】${activeCustomer.contact}，本月申报已通过。应缴税金明细如下：\n- 增值税：500.00 元\n- 其他附征：10.00 元\n共计：510.00 元。内容无误请回复“确认缴款”，我将为您发起在线国库划扣。` },
       { sender: 'customer', name: activeCustomer.contact, text: '确认缴款' },
-      { sender: 'bot', name: '财税顾问张老师', text: '收到，正在连接国库支付系统... ⚙️ 支付请求发送成功，正在等待验证... 🔓 扣款成功！' },
+      { sender: 'bot', name: '财税顾问张老师', text: '正在连接国库支付系统... 🔓 支付成功！本月初税务工作已圆满闭环。' },
       { 
         sender: 'bot', 
         name: '财税顾问张老师', 
@@ -1004,9 +1024,19 @@ export default function App() {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
-                              <MoreVertical size={16} />
-                            </button>
+                            <div className="flex justify-end gap-2">
+                              <button 
+                                onClick={() => generateReport(c)}
+                                disabled={generatingReportId === c.id}
+                                className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-bold hover:bg-indigo-100 transition-all flex items-center gap-1.5 border border-indigo-100 disabled:opacity-50"
+                              >
+                                {generatingReportId === c.id ? <Loader2 size={12} className="animate-spin" /> : <FileText size={12} />}
+                                一键生成报告
+                              </button>
+                              <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
+                                <MoreVertical size={16} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -1459,6 +1489,76 @@ export default function App() {
                 )}
               </motion.div>
             </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Report Summary Modal */}
+        <AnimatePresence>
+          {reportData && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl relative border border-slate-100"
+              >
+                <div className="absolute top-6 right-6">
+                  <button onClick={() => setReportData(null)} className="p-2 hover:bg-slate-50 rounded-full transition-colors text-slate-400">
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 ring-4 ring-indigo-50/50">
+                    <FileText size={28} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900">{reportData.month}月度服务报告</h3>
+                    <p className="text-sm text-slate-500 font-medium">{reportData.name}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="p-5 bg-slate-50/50 rounded-2xl border border-slate-100">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">AI 服务节点摘要</div>
+                    <ul className="space-y-4">
+                      {[
+                        { label: '开票管理', value: reportData.invoicing, icon: <CheckCircle2 size={14} className="text-indigo-500" /> },
+                        { label: '资料收集', value: reportData.docs, icon: <CheckCircle2 size={14} className="text-indigo-500" /> },
+                        { label: '税金测算', value: reportData.tax, icon: <CheckCircle2 size={14} className="text-indigo-500" /> },
+                        { label: '服务结项', value: reportData.delivery, icon: <CheckCircle2 size={14} className="text-indigo-500" /> }
+                      ].map((item, i) => (
+                        <li key={i} className="flex gap-3 items-start">
+                          <div className="mt-0.5">{item.icon}</div>
+                          <div>
+                            <div className="text-[11px] font-bold text-slate-800">{item.label}</div>
+                            <div className="text-[10px] text-slate-500 leading-relaxed mt-0.5">{item.value}</div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="mt-8 grid grid-cols-2 gap-4">
+                  <button 
+                    onClick={() => setReportData(null)}
+                    className="w-full py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all"
+                  >
+                    稍后再说
+                  </button>
+                  <button 
+                    onClick={() => {
+                      alert('报告已推送至客户微信群');
+                      setReportData(null);
+                    }}
+                    className="w-full py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                  >
+                    推送到群
+                  </button>
+                </div>
+              </motion.div>
+            </div>
           )}
         </AnimatePresence>
       </main>
