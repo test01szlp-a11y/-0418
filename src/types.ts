@@ -1,4 +1,4 @@
-export type BusinessStatus = 'wait_info' | 'invoicing' | 'collecting' | 'calculating' | 'filing' | 'paid';
+export type BusinessStatus = 'wait_info' | 'invoicing' | 'collecting' | 'calculating' | 'filing' | 'paid' | 'manual';
 
 export interface Customer {
   id: string;
@@ -13,14 +13,19 @@ export interface Customer {
     salary: boolean;
   };
   lastMessage?: string;
+  avatar: string;
 }
 
 export interface Message {
   id: string;
   sender: 'system' | 'customer' | 'bot';
   senderName: string;
+  avatar?: string;
   content: string;
   timestamp: Date;
+  isInvoice?: boolean;
+  image?: string;
+  isReceipt?: boolean;
 }
 
 export interface TaxData {
