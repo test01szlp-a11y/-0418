@@ -162,6 +162,9 @@ export default function App() {
     const target = customers.find(c => c.id === targetId);
     if (!target) return;
 
+    const currentMonth = new Date().getMonth() + 1;
+    const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+
     setActiveCustomer(target);
     setMessages([]);
     await new Promise(r => setTimeout(r, 1000));
@@ -176,17 +179,17 @@ export default function App() {
       { sender: 'bot', text: '✅ 开票成功！电子发票已发送至您的邮箱。', isInvoice: true },
 
       // --- 阶段 2: 资料催收 ---
-      { sender: 'bot', text: `${target.contact}您好，系统识别到“${target.name.split(' ')[0]}”本月的银行流水尚未上传。为了不影响申报，请及时提供。` },
+      { sender: 'bot', text: `【月底提醒】${target.contact}您好，今天是 ${currentMonth}月 25 号。系统识别到“${target.name.split(' ')[0]}”本月的银行流水尚未上传。为了不影响申报，请及时提供。` },
       { sender: 'customer', text: '好的，刚导出来的，发给你。' },
       { sender: 'bot', text: '收到！系统正在进行 OCR 识别... ✅ 资料已入库。' },
 
       // --- 阶段 3: 税金确认 ---
-      { sender: 'bot', text: '【税金确认】基于本月数据，预计应交增值税：¥120.00。确认无误请回复“确认”，我将为您申报。' },
+      { sender: 'bot', text: `【申报提醒】${target.contact}早！今天是 ${nextMonth}月 1 号。基于 ${currentMonth}月经营数据，系统精算结果：预计应交增值税：¥120.00。确认无误请回复“确认”，我将为您申报。` },
       { sender: 'customer', text: '确认，申报吧。' },
       { sender: 'bot', text: '🚀 申报已提交！正在等待税务局反馈结果...' },
 
       // --- 阶段 4: 扣款确认 ---
-      { sender: 'bot', text: '【缴款提醒】您的申报已审核通过。本月应缴税金共计 ¥120.00，请回复“确认缴款”以发起划扣。' },
+      { sender: 'bot', text: `【缴款提醒】您的申报已审核通过。${nextMonth}月应缴税金共计 ¥120.00，请回复“确认缴款”以发起划扣。` },
       { sender: 'customer', text: '确认缴款' },
       { sender: 'bot', text: '🔓 扣款成功！税务工作已圆满完成。' },
 
@@ -255,6 +258,10 @@ export default function App() {
     setIsAutoPlaying(true);
     setMessages([]);
     
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+
     const steps = [
       // 场景 1: 开票
       { sender: 'customer', name: activeCustomer.contact, text: '张老师，帮我开张发票。' },
@@ -264,13 +271,13 @@ export default function App() {
       { sender: 'customer', name: activeCustomer.contact, text: '确认无误。' },
       { sender: 'bot', name: '财税顾问张老师', text: '正在提交系统开票... ✅ 开票成功！增值税电子普通发票已发送至您的预留邮箱，请查收。', isInvoice: true },
       
-      // 场景 2: 月底资料催收 (4月25号)
-      { sender: 'bot', name: '财税顾问张老师', text: `【月底提醒】${activeCustomer.contact}您好，今天是 4 月 25 号，系统识别到“${activeCustomer.name.split(' ')[0]}”本月的工资表和银行流水尚未上传。为了不影响下月初的纳税申报，请现在提供一下，好吗？` },
+      // 场景 2: 月底资料催收
+      { sender: 'bot', name: '财税顾问张老师', text: `【月底提醒】${activeCustomer.contact}您好，今天是 ${currentMonth} 月 25 号，系统识别到“${activeCustomer.name.split(' ')[0]}”本月的工资表和银行流水尚未上传。为了不影响下月初的纳税申报，请现在提供一下，好吗？` },
       { sender: 'customer', name: activeCustomer.contact, text: '好的，工资表和流水截图发你，你核对一下。' },
       { sender: 'bot', name: '财税顾问张老师', text: '收到！系统正在进行 OCR 识别与归档... ✅ 资料已确认并入库。目前所有申报必备资料已收集完毕。' },
       
-      // 场景 3: 月初申报确认 (5月1号)
-      { sender: 'bot', name: '财税顾问张老师', text: `【申报提醒】${activeCustomer.contact}早！今天是 5 月 1 号。基于您 4 月份的经营数据，系统精算结果如下：\n- 本月销项税额：1,000.00 元\n- 已认证进项税额：500.00 元\n- 预计应交增值税：500.00 元\n数据确认无误后请回复“确认”，系统将自动为您发起税务申报。` },
+      // 场景 3: 月初申报确认
+      { sender: 'bot', name: '财税顾问张老师', text: `【申报提醒】${activeCustomer.contact}早！今天是 ${nextMonth} 月 1 号。基于您 ${currentMonth} 月份的经营数据，系统精算结果如下：\n- 本月销项税额：1,000.00 元\n- 已认证进项税额：500.00 元\n- 预计应交增值税：500.00 元\n数据确认无误后请回复“确认”，系统将自动为您发起税务申报。` },
       { sender: 'customer', name: activeCustomer.contact, text: '没问题，确认。' },
       { sender: 'bot', name: '财税顾问张老师', text: '收到指令，系统正在连接电子税务局进行全自动化申报... 🚀 申报已成功提交！税金缴纳通知稍后将通过系统推送给您。' },
       { sender: 'bot', name: '财税顾问张老师', text: `【缴款提醒】${activeCustomer.contact}，本月应交税金明细已生成，请核对并及时操作扣款：\n- 增值税：500.00 元\n- 印花税：10.00 元\n- 个人所得税：200.00 元\n- 企业所得税：300.00 元\n共计：1,010.00 元。内容核对无误请回复“确认缴款”，我将为您发起支付请求。` },
