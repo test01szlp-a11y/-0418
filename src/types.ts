@@ -28,10 +28,3 @@ export interface Message {
   image?: string;
   isReceipt?: boolean;
 }
-
-export interface TaxData {
-  sales: number;
-  purchases: number;
-  vatRate: number;
-  estimatedVat: number;
-}

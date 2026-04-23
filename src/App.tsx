@@ -34,7 +34,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { generateBotResponse } from './services/gemini';
-import type { Customer, Message, BusinessStatus, TaxData } from './types';
+import type { Customer, Message, BusinessStatus } from './types';
 
 // Mock Data
 const BOT_AVATAR = 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=200&h=200&fit=crop&q=80';
@@ -60,7 +60,7 @@ const INITIAL_MESSAGES: Message[] = [
 ];
 
 export default function App() {
-  const [view, setView] = useState<'dashboard' | 'chat' | 'docs' | 'tax' | 'workbench' | 'settings' | 'monitoring'>('workbench');
+  const [view, setView] = useState<'dashboard' | 'docs' | 'workbench' | 'settings' | 'monitoring'>('docs');
   const [activeCustomer, setActiveCustomer] = useState<Customer | null>(null);
   const [customers, setCustomers] = useState<Customer[]>(INITIAL_CUSTOMERS);
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
@@ -498,12 +498,10 @@ export default function App() {
         </div>
 
         <div className="flex-1 space-y-1">
-          <NavItem icon={<Users size={20} />} label="客户看板" active={view === 'dashboard'} onClick={() => setView('dashboard')} />
+          <NavItem icon={<FileText size={20} />} label="服务工作台" active={view === 'docs'} onClick={() => setView('docs')} />
           <NavItem icon={<Activity size={20} />} label="监控看板" active={view === 'monitoring'} onClick={() => setView('monitoring')} />
           <NavItem icon={<TrendingUp size={20} />} label="记账工作台" active={view === 'workbench'} onClick={() => setView('workbench')} />
-          <NavItem icon={<MessageSquare size={20} />} label="协作会话" active={view === 'chat'} onClick={() => setView('chat')} />
-          <NavItem icon={<FileText size={20} />} label="服务工作台" active={view === 'docs'} onClick={() => setView('docs')} />
-          <NavItem icon={<PieChart size={20} />} label="税金分析" active={view === 'tax'} onClick={() => setView('tax')} />
+          <NavItem icon={<Users size={20} />} label="客户资料" active={view === 'dashboard'} onClick={() => setView('dashboard')} />
         </div>
 
         <div className="pt-6 border-t border-slate-100">
@@ -637,7 +635,7 @@ export default function App() {
               <header className="flex justify-between items-center mb-8">
                 <div>
                   <h1 className="text-3xl font-bold tracking-tight">
-                    {dashboardFilter === 'manual' ? '需人工介入列表' : '客户看板'}
+                    {dashboardFilter === 'manual' ? '需人工介入列表' : '客户资料'}
                   </h1>
                   <p className="text-slate-500 mt-1">
                     {dashboardFilter === 'manual' 
@@ -758,141 +756,15 @@ export default function App() {
             </motion.div>
           )}
 
-          {view === 'chat' && (
-            <motion.div 
-              key="chat"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex h-full overflow-hidden"
-            >
-              {/* Focused Chat Sidebar */}
-              <div className="w-80 border-r border-slate-200 bg-white flex flex-col flex-shrink-0">
-                <div className="p-6 border-b border-slate-100">
-                  <div className="flex items-center gap-2 mb-1">
-                    <MessageSquare size={16} className="text-indigo-600" />
-                    <h2 className="text-lg font-bold text-slate-800">在线会话</h2>
-                  </div>
-                  <p className="text-[10px] text-slate-400 font-medium">张老师为您实时在线服务中</p>
-                </div>
-                <div className="flex-1 overflow-y-auto scrollbar-hide">
-                  {customers.map(c => (
-                    <div 
-                      key={c.id} 
-                      onClick={() => setActiveCustomer(c)}
-                      className={`p-4 cursor-pointer border-b border-slate-50 transition-all flex gap-3 ${activeCustomer?.id === c.id ? 'bg-indigo-50/50' : 'hover:bg-slate-50'}`}
-                    >
-                      <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 border border-slate-100 shadow-sm">
-                        <img src={c.avatar} alt={c.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start mb-0.5">
-                          <span className={`font-bold text-sm truncate ${activeCustomer?.id === c.id ? 'text-indigo-600' : 'text-slate-800'}`}>{c.name}</span>
-                          <span className="text-[10px] text-slate-400 italic">刚刚</span>
-                        </div>
-                        <p className="text-xs text-slate-400 truncate">{c.lastMessage || '暂无新消息'}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Chat Area */}
-              <div className="flex-1 flex flex-col bg-[#F3F5F7]">
-                {activeCustomer ? (
-                  <>
-                    <header className="p-4 bg-white border-b border-slate-200 flex justify-between items-center shadow-sm">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl overflow-hidden border border-indigo-50 shadow-sm">
-                          <img src={activeCustomer.avatar} alt={activeCustomer.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                        </div>
-                        <div>
-                          <div className="font-bold text-sm tracking-tight">{activeCustomer.name} 财务协作群</div>
-                          <div className="text-[10px] text-emerald-500 font-medium flex items-center gap-1">
-                            <span className="w-1 h-1 bg-emerald-500 rounded-full"></span>
-                            顾问张老师在线
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={() => setCustomers(prev => prev.map(cust => cust.id === activeCustomer.id ? { ...cust, isTakenOver: !cust.isTakenOver } : cust))}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${activeCustomer.isTakenOver ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-                        >
-                          {activeCustomer.isTakenOver ? <Lock size={12} /> : <Unlock size={12} />}
-                          {activeCustomer.isTakenOver ? '手动接管中' : '自动响应模式'}
-                        </button>
-                        <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors"><MoreVertical size={20} /></button>
-                      </div>
-                    </header>
-
-                    <div className="flex-1 p-6 overflow-y-auto space-y-4 scrollbar-hide">
-                      {messages.map((m, idx) => (
-                        <div key={idx} className={`flex ${m.sender === 'bot' ? 'justify-start' : 'justify-end'} group items-start`}>
-                          {m.sender === 'bot' && (
-                            <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 mr-2 ring-1 ring-indigo-50">
-                              <img src={m.avatar || BOT_AVATAR} alt="Bot" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                            </div>
-                          )}
-                          <div className={`max-w-[70%] ${m.sender === 'bot' ? 'bg-white rounded-tr-xl rounded-br-xl rounded-bl-xl shadow-sm border border-slate-100' : 'bg-indigo-600 text-white rounded-tl-xl rounded-bl-xl rounded-br-xl shadow-md p-3 px-4'} p-3 px-4 text-sm relative`}>
-                            <div className={`text-[9px] mb-1 font-bold ${m.sender === 'bot' ? 'text-indigo-600' : 'text-blue-100'}`}>
-                              {m.senderName}
-                            </div>
-                            <div className="leading-relaxed whitespace-pre-wrap">{m.content}</div>
-                            {m.isInvoice && (
-                              <div className="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-800">
-                                <div className="text-[9px] font-bold text-indigo-600 border-b border-dashed border-slate-200 mb-2 pb-1">增值税专用发票</div>
-                                <div className="text-[10px] flex justify-between uppercase leading-4 font-mono"><span className="text-slate-500">金额：</span>¥5,000.00</div>
-                                <button className="w-full mt-2 py-1 bg-white border border-slate-200 rounded text-[9px] font-bold text-indigo-600 shadow-sm">下载 PDF</button>
-                              </div>
-                            )}
-                            <div className={`text-[8px] mt-2 text-right opacity-60 ${m.sender === 'bot' ? 'text-slate-500' : 'text-white'}`}>
-                              {m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      {isBotTyping && <div className="flex gap-1 p-2"><div className="w-1 h-1 bg-slate-300 rounded-full animate-bounce"></div><div className="w-1 h-1 bg-slate-300 rounded-full animate-bounce delay-100"></div></div>}
-                      <div ref={chatEndRef}></div>
-                    </div>
-
-                    <div className="p-4 bg-white border-t border-slate-100">
-                      <div className="flex items-center gap-2 bg-slate-50 rounded-xl p-2 border border-slate-200">
-                        <input 
-                          type="text" 
-                          value={inputText}
-                          onChange={(e) => setInputText(e.target.value)}
-                          placeholder="给客户回复..."
-                          onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                          className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-1"
-                        />
-                        <button onClick={handleSendMessage} className="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center hover:bg-indigo-700 transition-all"><Send size={14} /></button>
-                      </div>
-                      <div className="flex gap-2 mt-3 px-1">
-                        <QuickAction label="发送发票" onClick={() => setInputText('发票已开出，请查收。')} />
-                        <QuickAction label="催发票" onClick={() => setInputText('老板，上月的进项发票记得在小程序上传一下哦')} />
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center text-slate-400 bg-white">
-                    <MessageSquare size={32} className="mb-4 opacity-20" />
-                    <p className="text-sm font-medium">选择一个协作群开启专业支持</p>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-
           {view === 'docs' && (
             <motion.div 
               key="docs"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="p-8 max-w-7xl mx-auto"
+              className="p-8 max-w-7xl mx-auto space-y-8"
             >
-              <header className="flex justify-between items-center mb-8">
+              <header className="flex justify-between items-center mb-0">
                 <div>
                   <h1 className="text-3xl font-bold tracking-tight">AI 服务工作台</h1>
                   <p className="text-slate-500 mt-1">全流程自动化服务状态监控与批量快速介入</p>
@@ -908,6 +780,29 @@ export default function App() {
                   </div>
                 </div>
               </header>
+
+              {/* Service Metrics Dashboard */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                  { title: '资料待收集', count: 12, icon: <Upload size={18} />, color: 'blue', desc: '包括流水/工资表缺失' },
+                  { title: '待测算税金', count: 8, icon: <Activity size={18} />, color: 'emerald', desc: '系统全自动测算中' },
+                  { title: '待业务申报', count: 5, icon: <Send size={18} />, color: 'blue', desc: '等待税务反馈/人工确认' },
+                  { title: '待缴款确认', count: 3, icon: <CreditCard size={18} />, color: 'red', desc: '已申报待税款扣缴' }
+                ].map((item, i) => (
+                  <div key={i} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all group">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className={`p-2 rounded-xl border ${item.color === 'blue' ? 'bg-blue-50 text-blue-600 border-blue-100' : item.color === 'emerald' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
+                        {item.icon}
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{item.title}</span>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-black text-slate-900 tabular-nums">{item.count} <span className="text-xs font-normal text-slate-400">户</span></div>
+                      <div className="text-[10px] text-slate-400 mt-1 font-medium">{item.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden blur-[0.2px]">
                 <div className="p-5 border-b border-slate-100 bg-slate-50/30 flex items-center justify-between">
@@ -1073,7 +968,7 @@ export default function App() {
                                 className="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-[10px] font-bold hover:bg-rose-100 transition-all flex items-center gap-1.5 border border-rose-100 disabled:opacity-50"
                               >
                                 {analyzingHealthId === c.id ? <Loader2 size={12} className="animate-spin" /> : <Activity size={12} />}
-                                智能分析
+                                合规分析
                               </button>
                               <button 
                                 onClick={() => generateReport(c)}
@@ -1081,7 +976,7 @@ export default function App() {
                                 className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-bold hover:bg-indigo-100 transition-all flex items-center gap-1.5 border border-indigo-100 disabled:opacity-50"
                               >
                                 {generatingReportId === c.id ? <Loader2 size={12} className="animate-spin" /> : <FileText size={12} />}
-                                一键生成报告
+                                月度报告
                               </button>
                               <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
                                 <MoreVertical size={16} />
@@ -1093,28 +988,6 @@ export default function App() {
                     })}
                   </tbody>
                 </table>
-              </div>
-            </motion.div>
-          )}
-
-          {view === 'tax' && (
-            <motion.div 
-              key="tax"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="p-8 max-w-4xl mx-auto"
-            >
-              <h1 className="text-3xl font-bold mb-8 text-center" id="tax_analysis_title">税金测算与申报</h1>
-              <div className="space-y-6">
-                {customers.filter(c => c.status === 'calculating' || c.status === 'filing').map(c => (
-                  <TaxCard key={c.id} customer={c} />
-                ))}
-                {customers.filter(c => c.status !== 'calculating' && c.status !== 'filing').length > 0 && (
-                   <div className="text-center p-12 bg-slate-50 rounded-3xl border border-dashed border-slate-200 text-slate-400">
-                     <p className="text-sm">其他客户尚未进入税金环节</p>
-                   </div>
-                )}
               </div>
             </motion.div>
           )}
@@ -1662,7 +1535,7 @@ export default function App() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="text-2xl font-bold text-slate-900">企业智能经营体检表</h3>
+                        <h3 className="text-2xl font-bold text-slate-900">企业智能合规体检表</h3>
                         <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-black rounded uppercase tracking-wider">AI Verified</span>
                       </div>
                       <p className="text-slate-500 font-medium">{healthCheckData.name} · {new Date().getFullYear()}年第{Math.ceil((new Date().getMonth()+1)/3)}季度</p>
@@ -1837,54 +1710,6 @@ function DocItem({ label, received }: { label: string, received: boolean }) {
       ) : (
         <span className="px-2 py-0.5 bg-[#FEF3C7] text-[#92400E] text-[10px] font-bold rounded uppercase">待补齐</span>
       )}
-    </div>
-  );
-}
-
-function TaxCard({ customer }: { customer: Customer, key?: React.Key }) {
-  const [data] = useState<TaxData>({
-    sales: 120500,
-    purchases: 45000,
-    vatRate: 0.06,
-    estimatedVat: 4530,
-  });
-
-  return (
-    <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden">
-      <div className="p-5 border-b border-[#E2E8F0] flex justify-between items-center bg-[#F8FAFC]">
-        <div>
-          <h3 className="text-lg font-bold text-[#1E293B]">{customer.name}</h3>
-          <p className="text-[10px] text-[#64748B] font-bold uppercase tracking-wider mt-0.5">2026年3月 税金预研报告</p>
-        </div>
-        <div className={`px-3 py-1 rounded text-[11px] font-bold uppercase ${customer.status === 'filing' ? 'bg-[#D1FAE5] text-[#065F46]' : 'bg-[#EFF6FF] text-[#2563EB]'}`}>
-          {customer.status === 'filing' ? '待申报' : '测算中'}
-        </div>
-      </div>
-      <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-[#64748B]">销项总额 (含税)</span>
-            <span className="font-mono font-bold text-sm">¥{data.sales.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between items-center text-[#10B981]">
-            <span className="text-sm">已认证进项 (含税)</span>
-            <span className="font-mono font-bold text-sm">- ¥{data.purchases.toLocaleString()}</span>
-          </div>
-          <div className="h-px bg-[#E2E8F0]"></div>
-          <div className="flex justify-between items-center">
-            <span className="text-[#1E293B] font-bold">应纳增值税</span>
-            <span className="font-mono font-bold text-xl text-[#2563EB]">¥{data.estimatedVat.toLocaleString()}</span>
-          </div>
-        </div>
-        <div className="flex flex-col justify-center gap-3">
-          <button className="w-full py-3 bg-[#2563EB] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-sm">
-            <Send size={16} /> 发给客户确认
-          </button>
-          <button className="w-full py-3 bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#F1F5F9] transition-all">
-            <CheckCircle2 size={16} /> 生成申报凭证
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
