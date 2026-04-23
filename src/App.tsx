@@ -27,7 +27,10 @@ import {
   X,
   Download,
   Lock,
-  Unlock
+  Unlock,
+  ShieldCheck,
+  ListChecks,
+  Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { generateBotResponse } from './services/gemini';
@@ -72,18 +75,57 @@ export default function App() {
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([]);
   const [generatingReportId, setGeneratingReportId] = useState<string | null>(null);
   const [reportData, setReportData] = useState<any>(null);
+  const [analyzingHealthId, setAnalyzingHealthId] = useState<string | null>(null);
+  const [healthCheckData, setHealthCheckData] = useState<any>(null);
+
+  const generateHealthCheck = async (customer: Customer) => {
+    setAnalyzingHealthId(customer.id);
+    await new Promise(r => setTimeout(r, 2000));
+    
+    // Simulate health check data
+    const health = {
+      name: customer.name,
+      score: 88,
+      riskLevel: '低风险',
+      status: '健康',
+      metrics: [
+        { label: '税务合规性', value: '100%', status: 'optimal', desc: '准时申报，无异常预警' },
+        { label: '进项充足度', value: '72%', status: 'warning', desc: '本月还有约 5k 进项缺口建议补齐' },
+        { label: '发票开具率', value: '15%', status: 'optimal', desc: '开票量稳健，无突击开票风险' },
+        { label: '资金流动性', value: '优', status: 'optimal', desc: '现金流能够覆盖 3 个月以上经营' }
+      ],
+      suggestions: [
+        '建议在 25 号前补齐采购发票以完善进项抵扣',
+        '关注下季度高新认定续展工作',
+        '目前的税负率处于行业健康区间（3.2%）'
+      ]
+    };
+    
+    setHealthCheckData(health);
+    setAnalyzingHealthId(null);
+  };
 
   const generateReport = async (customer: Customer) => {
     setGeneratingReportId(customer.id);
     await new Promise(r => setTimeout(r, 1500));
     
-    // Simulate report data
+    // Simulate report data with both monthly and annual stats
     const summary = {
       name: customer.name,
       month: new Date().getMonth() + 1,
-      invoicing: customer.docsReceived.invoice ? '已开具增值税专用发票 1 张，金额 ¥5,000.00' : '本月无开票需求',
-      docs: customer.docsReceived.bank && customer.docsReceived.salary ? '资料收集已齐备（含流水、工资表）' : '资料尚未齐备，催收中',
-      tax: customer.status === 'calculating' || customer.status === 'filing' || customer.status === 'paid' ? '已完成精准测算，预计纳税 ¥1,010.00' : '测算进行中',
+      year: new Date().getFullYear(),
+      monthly: {
+        invoicing: customer.docsReceived.invoice ? '已开具发票 1 张，金额 ¥5,000.00' : '本月无开票需求',
+        docs: customer.docsReceived.bank && customer.docsReceived.salary ? '资料收集已齐备' : '资料尚未齐备',
+        tax: customer.status === 'calculating' || customer.status === 'filing' || customer.status === 'paid' ? '预计纳税 ¥1,010.00' : '测算进行中',
+      },
+      annual: {
+        totalRevenue: '¥624,500.00',
+        totalTax: '¥12,450.00',
+        invoiceCount: 42,
+        taxSaving: '¥3,200.00',
+        avgTaxBurden: '2.0%'
+      },
       delivery: customer.status === 'paid' ? '全流程已闭环，凭证已回传' : '流程处理中'
     };
     
@@ -1026,6 +1068,14 @@ export default function App() {
                           <td className="px-6 py-4 text-right">
                             <div className="flex justify-end gap-2">
                               <button 
+                                onClick={() => generateHealthCheck(c)}
+                                disabled={analyzingHealthId === c.id}
+                                className="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-[10px] font-bold hover:bg-rose-100 transition-all flex items-center gap-1.5 border border-rose-100 disabled:opacity-50"
+                              >
+                                {analyzingHealthId === c.id ? <Loader2 size={12} className="animate-spin" /> : <Activity size={12} />}
+                                智能分析
+                              </button>
+                              <button 
                                 onClick={() => generateReport(c)}
                                 disabled={generatingReportId === c.id}
                                 className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-bold hover:bg-indigo-100 transition-all flex items-center gap-1.5 border border-indigo-100 disabled:opacity-50"
@@ -1508,39 +1558,70 @@ export default function App() {
                   </button>
                 </div>
 
-                <div className="flex items-center gap-4 mb-8">
+                <div className="flex items-center gap-4 mb-6">
                   <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 ring-4 ring-indigo-50/50">
                     <FileText size={28} />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-slate-900">{reportData.month}月度服务报告</h3>
+                    <h3 className="text-xl font-bold text-slate-900">{reportData.month}月度服务汇报</h3>
                     <p className="text-sm text-slate-500 font-medium">{reportData.name}</p>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="p-5 bg-slate-50/50 rounded-2xl border border-slate-100">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">AI 服务节点摘要</div>
-                    <ul className="space-y-4">
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 scrollbar-hide">
+                  {/* Monthly Section */}
+                  <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+                    <div className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <Clock size={12} />
+                      本月服务进度
+                    </div>
+                    <ul className="space-y-3">
                       {[
-                        { label: '开票管理', value: reportData.invoicing, icon: <CheckCircle2 size={14} className="text-indigo-500" /> },
-                        { label: '资料收集', value: reportData.docs, icon: <CheckCircle2 size={14} className="text-indigo-500" /> },
-                        { label: '税金测算', value: reportData.tax, icon: <CheckCircle2 size={14} className="text-indigo-500" /> },
-                        { label: '服务结项', value: reportData.delivery, icon: <CheckCircle2 size={14} className="text-indigo-500" /> }
+                        { label: '发票管理', value: reportData.monthly.invoicing },
+                        { label: '资料收集', value: reportData.monthly.docs },
+                        { label: '税金测算', value: reportData.monthly.tax },
+                        { label: '当前节点', value: reportData.delivery }
                       ].map((item, i) => (
-                        <li key={i} className="flex gap-3 items-start">
-                          <div className="mt-0.5">{item.icon}</div>
-                          <div>
-                            <div className="text-[11px] font-bold text-slate-800">{item.label}</div>
-                            <div className="text-[10px] text-slate-500 leading-relaxed mt-0.5">{item.value}</div>
-                          </div>
+                        <li key={i} className="flex justify-between items-start gap-4">
+                          <span className="text-[11px] font-bold text-slate-500 whitespace-nowrap">{item.label}</span>
+                          <span className="text-[11px] text-slate-800 text-right font-medium">{item.value}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
+
+                  {/* Annual Section */}
+                  <div className="p-4 bg-indigo-50/30 rounded-2xl border border-indigo-100/30">
+                    <div className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <TrendingUp size={12} />
+                      {reportData.year} 年度汇总
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 bg-white/80 rounded-xl border border-indigo-100/50">
+                        <div className="text-[9px] font-bold text-slate-400 mb-1 uppercase">本年累计营收</div>
+                        <div className="text-sm font-black text-slate-900">{reportData.annual.totalRevenue}</div>
+                      </div>
+                      <div className="p-3 bg-white/80 rounded-xl border border-indigo-100/50">
+                        <div className="text-[9px] font-bold text-slate-400 mb-1 uppercase">本年累计税金</div>
+                        <div className="text-sm font-black text-slate-900">{reportData.annual.totalTax}</div>
+                      </div>
+                      <div className="p-3 bg-white/80 rounded-xl border border-indigo-100/50">
+                        <div className="text-[9px] font-bold text-slate-400 mb-1 uppercase">开票总数</div>
+                        <div className="text-sm font-black text-slate-900">{reportData.annual.invoiceCount} 张</div>
+                      </div>
+                      <div className="p-3 bg-white/80 rounded-xl border border-indigo-100/50">
+                        <div className="text-[9px] font-bold text-slate-400 mb-1 uppercase">已省税金</div>
+                        <div className="text-sm font-black text-emerald-600">{reportData.annual.taxSaving}</div>
+                      </div>
+                    </div>
+                    <div className="mt-3 px-3 py-2 bg-indigo-600 rounded-xl flex justify-between items-center shadow-lg shadow-indigo-100/50">
+                      <span className="text-[10px] font-bold text-indigo-100 uppercase tracking-tight">年度平均税负率</span>
+                      <span className="text-sm font-black text-white">{reportData.annual.avgTaxBurden}</span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="mt-8 grid grid-cols-2 gap-4">
+                <div className="mt-6 grid grid-cols-2 gap-4">
                   <button 
                     onClick={() => setReportData(null)}
                     className="w-full py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all"
@@ -1557,6 +1638,126 @@ export default function App() {
                     推送到群
                   </button>
                 </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Health Checkup Modal */}
+        <AnimatePresence>
+          {healthCheckData && (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95, y: 30 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 30 }}
+                className="bg-white rounded-[2rem] p-8 max-w-2xl w-full shadow-2xl relative border border-slate-100 overflow-hidden"
+              >
+                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 via-teal-500 to-indigo-600"></div>
+                
+                <div className="flex justify-between items-start mb-8">
+                  <div className="flex items-center gap-5">
+                    <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-100">
+                      <ShieldCheck size={32} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-2xl font-bold text-slate-900">企业智能经营体检表</h3>
+                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-black rounded uppercase tracking-wider">AI Verified</span>
+                      </div>
+                      <p className="text-slate-500 font-medium">{healthCheckData.name} · {new Date().getFullYear()}年第{Math.ceil((new Date().getMonth()+1)/3)}季度</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-4xl font-black text-indigo-600 leading-none">{healthCheckData.score}</div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">综合健康评分</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col justify-between">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">风险等级</span>
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className={`w-2 h-2 rounded-full ${healthCheckData.riskLevel === '低风险' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
+                      <span className="text-lg font-bold text-slate-800">{healthCheckData.riskLevel}</span>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col justify-between">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">当前状态</span>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Activity className="text-indigo-600" size={18} />
+                      <span className="text-lg font-bold text-slate-800">{healthCheckData.status}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 mb-8">
+                  <div className="text-xs font-bold text-slate-800 flex items-center gap-2 px-1">
+                    <ListChecks size={14} className="text-indigo-600" />
+                    核心经营指标分析
+                  </div>
+                  <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-slate-50/50 border-b border-slate-100">
+                        <tr>
+                          <th className="px-5 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">关键维度</th>
+                          <th className="px-5 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">测评结果</th>
+                          <th className="px-5 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">AI 评估</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                        {healthCheckData.metrics.map((m: any, i: number) => (
+                          <tr key={i} className="hover:bg-slate-50/30 transition-colors">
+                            <td className="px-5 py-4 font-bold text-slate-700">{m.label}</td>
+                            <td className="px-5 py-4">
+                              <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${m.status === 'optimal' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                                {m.value}
+                              </span>
+                            </td>
+                            <td className="px-5 py-4 text-xs text-slate-500 leading-relaxed font-medium">{m.desc}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="space-y-3 p-5 bg-indigo-50/30 rounded-2xl border border-indigo-100/50 ring-1 ring-indigo-100/20">
+                  <div className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-1 flex items-center gap-2">
+                    <Sparkles size={12} />
+                    下阶段 AI 专家建议
+                  </div>
+                  <ul className="space-y-2">
+                    {healthCheckData.suggestions.map((s: string, i: number) => (
+                      <li key={i} className="flex gap-2 items-start text-[11px] text-slate-600 font-medium">
+                        <div className="mt-1.5 w-1 h-1 bg-indigo-400 rounded-full flex-shrink-0"></div>
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="mt-8 flex gap-4">
+                  <button 
+                    onClick={() => setHealthCheckData(null)}
+                    className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all text-sm"
+                  >
+                    暂不导出
+                  </button>
+                  <button 
+                    onClick={() => {
+                      alert('体检表 PDF 已生成并发送至客户群');
+                      setHealthCheckData(null);
+                    }}
+                    className="flex-[1.5] py-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 text-sm flex items-center justify-center gap-2"
+                  >
+                    <Download size={16} /> 导出 PDF 报告并推送
+                  </button>
+                </div>
+
+                <button onClick={() => setHealthCheckData(null)} className="absolute top-6 right-6 p-2 hover:bg-slate-50 rounded-full transition-colors text-slate-400">
+                  <X size={20} />
+                </button>
               </motion.div>
             </div>
           )}
