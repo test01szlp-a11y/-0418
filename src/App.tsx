@@ -60,7 +60,7 @@ const INITIAL_MESSAGES: Message[] = [
 ];
 
 export default function App() {
-  const [view, setView] = useState<'dashboard' | 'docs' | 'workbench' | 'settings' | 'monitoring'>('docs');
+  const [view, setView] = useState<'dashboard' | 'docs' | 'workbench' | 'settings' | 'monitoring' | 'agent'>('docs');
   const [activeCustomer, setActiveCustomer] = useState<Customer | null>(null);
   const [customers, setCustomers] = useState<Customer[]>(INITIAL_CUSTOMERS);
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
@@ -76,7 +76,123 @@ export default function App() {
   const [generatingReportId, setGeneratingReportId] = useState<string | null>(null);
   const [reportData, setReportData] = useState<any>(null);
   const [analyzingHealthId, setAnalyzingHealthId] = useState<string | null>(null);
+  const [agentMessages, setAgentMessages] = useState<Message[]>([
+    {
+      id: 'agent-1',
+      sender: 'bot',
+      senderName: '记账数字员工 小智',
+      content: '老板好！我是您的记账数字助手小智。本月记账任务已初筛完成。',
+      timestamp: new Date(Date.now() - 1000 * 60 * 30),
+      avatar: 'https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=100&h=100&fit=crop&q=80'
+    },
+    {
+      id: 'agent-2',
+      sender: 'bot',
+      senderName: '记账数字员工 小智',
+      content: '【记账异常报告】\n经过全自动核对，发现以下 3 家客户存在异常情况，需要您确认处理方案：\n\n1. **智点科技**：发现一笔 ¥50,000 的跨期成本支出，建议分摊处理。\n2. **丰收餐饮**：本月银行流水与报销单金额差异较大。\n3. **绿洲园林**：缺少一张关键的固定资产采购发票。\n\n明细数据已为您整理好，请问是否按照建议方案自动调整并继续执行后续申报？',
+      timestamp: new Date(Date.now() - 1000 * 60 * 29),
+      avatar: 'https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=100&h=100&fit=crop&q=80'
+    }
+  ]);
+  const [isAgentTyping, setIsAgentTyping] = useState(false);
+  const [agentStage, setAgentStage] = useState<'anomaly' | 'bookkeeping_done' | 'filing_done' | 'payment_done'>('anomaly');
+
   const [healthCheckData, setHealthCheckData] = useState<any>(null);
+
+  const confirmAgentAction = async () => {
+    if (agentStage === 'anomaly') {
+      // 1. Accountant confirms anomaly fix
+      setAgentMessages(prev => [...prev, {
+        id: Date.now() + '-user-1',
+        sender: 'customer',
+        senderName: '专业会计师',
+        content: '确认处理异常，请继续执行记账。',
+        timestamp: new Date(),
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&q=80'
+      }]);
+
+      setIsAgentTyping(true);
+      await new Promise(r => setTimeout(r, 2000));
+      setIsAgentTyping(false);
+
+      setAgentMessages(prev => [...prev, {
+        id: Date.now() + '-agent-3',
+        sender: 'bot',
+        senderName: '记账数字员工 小智',
+        content: '【记账已完成】\n报告会计师，全部 125 家客户记账已完成！\n- 总计生成凭证：3,420 张\n- 自动归档单据：8,940 份\n\n数据已入库，接下来我将自动开启税务申报流程。',
+        timestamp: new Date(),
+        avatar: 'https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=100&h=100&fit=crop&q=80'
+      }]);
+
+      setIsAgentTyping(true);
+      await new Promise(r => setTimeout(r, 2000));
+      setIsAgentTyping(false);
+
+      setAgentMessages(prev => [...prev, {
+        id: Date.now() + '-agent-4',
+        sender: 'bot',
+        senderName: '记账数字员工 小智',
+        content: '【申报完成通知】\n老板，所有公司税务申报已提交成功！\n- 已申报：125 家\n- 待缴款：125 家\n\n其中有 5 家客户（智点科技、盛大物流等）税金变动较大，我已将“税金确认单”推送到对应的客户群，正在等待客户确认。一旦客户确认，需要您在此点击“批量缴款”指令。',
+        timestamp: new Date(),
+        avatar: 'https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=100&h=100&fit=crop&q=80'
+      }]);
+      setAgentStage('filing_done');
+    } else if (agentStage === 'filing_done') {
+      // 2. Accountant confirms payment
+      setAgentMessages(prev => [...prev, {
+        id: Date.now() + '-user-2',
+        sender: 'customer',
+        senderName: '专业会计师',
+        content: '客户已确认，请执行批量扣缴。',
+        timestamp: new Date(),
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&q=80'
+      }]);
+
+      setIsAgentTyping(true);
+      await new Promise(r => setTimeout(r, 2000));
+      setIsAgentTyping(false);
+
+      setAgentMessages(prev => [...prev, {
+        id: Date.now() + '-agent-5',
+        sender: 'bot',
+        senderName: '记账数字员工 小智',
+        content: '好的，指令已执行！125 家企业的税款已批量提交银行端扣缴。正在实时监控扣款状态...',
+        timestamp: new Date(),
+        avatar: 'https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=100&h=100&fit=crop&q=80'
+      }]);
+
+      await new Promise(r => setTimeout(r, 1500));
+
+      setAgentMessages(prev => [...prev, {
+        id: Date.now() + '-agent-6',
+        sender: 'bot',
+        senderName: '记账数字员工 小智',
+        content: '【扣款成功通知】\n老板，所有申报扣款已完成！税收凭证已回传至各客户资料夹。本月全流程任务顺利闭环！',
+        timestamp: new Date(),
+        avatar: 'https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=100&h=100&fit=crop&q=80'
+      }]);
+      setAgentStage('payment_done');
+    }
+  };
+
+  const pushPeriodicReport = (type: '10th' | '15th') => {
+    setIsAgentTyping(true);
+    setTimeout(() => {
+      setIsAgentTyping(false);
+      const content = type === '10th' 
+        ? '【10号申报进度日报】\n截止今日 10:00：\n- 已完成申报：98 家\n- 已完成缴款：65 家\n- 剩余 27 家正在等待客户侧确认。我会持续跟进。'
+        : '【15号税期结项报告】\n本月税期已正式圆满结束，成果汇报：\n- 完成记账：125 家\n- 完成报税：125 家\n- 完成缴款：125 家\n\n全量凭证与申报表已自动归档库。如需导出本月绩效汇总，请随时吩咐。';
+      
+      setAgentMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        sender: 'bot',
+        senderName: '记账数字员工 小智',
+        content,
+        timestamp: new Date(),
+        avatar: 'https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=100&h=100&fit=crop&q=80'
+      }]);
+    }, 1000);
+  };
 
   const generateHealthCheck = async (customer: Customer) => {
     setAnalyzingHealthId(customer.id);
@@ -479,6 +595,108 @@ export default function App() {
     setIsAutoPlaying(false);
   };
 
+  const startAgentDemo = async () => {
+    setIsAutoPlaying(true);
+    setView('agent');
+    setAgentStage('anomaly');
+    setAgentMessages([
+      {
+        id: 'agent-1',
+        sender: 'bot',
+        senderName: '记账数字员工 小智',
+        content: '老板好！我是您的记账数字助手小智。本月记账任务已初筛完成。',
+        timestamp: new Date(),
+        avatar: 'https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=100&h=100&fit=crop&q=80'
+      },
+      {
+        id: 'agent-2',
+        sender: 'bot',
+        senderName: '记账数字员工 小智',
+        content: '【记账异常报告】\n经过全自动核对，发现以下 3 家客户存在异常情况，需要您确认处理方案：\n\n1. **智点科技**：发现一笔 ¥50,000 的跨期成本支出，建议分摊处理。\n2. **丰收餐饮**：本月银行流水与报销单金额差异较大。\n3. **绿洲园林**：缺少一张关键的固定资产采购发票。\n\n明细数据已为您整理好，请问是否按照建议方案自动调整并继续执行后续申报？',
+        timestamp: new Date(),
+        avatar: 'https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=100&h=100&fit=crop&q=80'
+      }
+    ]);
+
+    await new Promise(r => setTimeout(r, 2000));
+    
+    // 流程 1: 确认异常处理
+    setAgentMessages(prev => [...prev, {
+      id: 'demo-user-1',
+      sender: 'customer',
+      senderName: '专业会计师',
+      content: '确认处理异常，请继续执行记账。',
+      timestamp: new Date(),
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&q=80'
+    }]);
+
+    setIsAgentTyping(true);
+    await new Promise(r => setTimeout(r, 2000));
+    setIsAgentTyping(false);
+
+    setAgentMessages(prev => [...prev, {
+      id: 'demo-agent-3',
+      sender: 'bot',
+      senderName: '记账数字员工 小智',
+      content: '【记账已完成】\n报告会计师，全部 125 家客户记账已完成！\n- 总计生成凭证：3,420 张\n- 自动归档单据：8,940 份\n\n数据已入库，接下来我将自动开启税务申报流程。',
+      timestamp: new Date(),
+      avatar: 'https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=100&h=100&fit=crop&q=80'
+    }]);
+
+    setIsAgentTyping(true);
+    await new Promise(r => setTimeout(r, 2000));
+    setIsAgentTyping(false);
+
+    setAgentMessages(prev => [...prev, {
+      id: 'demo-agent-4',
+      sender: 'bot',
+      senderName: '记账数字员工 小智',
+      content: '【申报完成通知】\n老板，所有公司税务申报已提交成功！\n- 已申报：125 家\n- 待缴款：125 家\n\n其中有 5 家客户税金变动较大，我已推送确认单。一旦客户确认，需要您点击“批量缴款”。',
+      timestamp: new Date(),
+      avatar: 'https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=100&h=100&fit=crop&q=80'
+    }]);
+    setAgentStage('filing_done');
+
+    await new Promise(r => setTimeout(r, 3000));
+
+    // 流程 2: 确认缴款
+    setAgentMessages(prev => [...prev, {
+      id: 'demo-user-2',
+      sender: 'customer',
+      senderName: '专业会计师',
+      content: '客户已确认，请执行批量扣缴。',
+      timestamp: new Date(),
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&q=80'
+    }]);
+
+    setIsAgentTyping(true);
+    await new Promise(r => setTimeout(r, 2000));
+    setIsAgentTyping(false);
+
+    setAgentMessages(prev => [...prev, {
+      id: 'demo-agent-5',
+      sender: 'bot',
+      senderName: '记账数字员工 小智',
+      content: '好的，指令已执行！125 家企业的税款已批量提交银行端扣缴。正在实时监控扣款状态...',
+      timestamp: new Date(),
+      avatar: 'https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=100&h=100&fit=crop&q=80'
+    }]);
+
+    await new Promise(r => setTimeout(r, 2000));
+
+    setAgentMessages(prev => [...prev, {
+      id: 'demo-agent-6',
+      sender: 'bot',
+      senderName: '记账数字员工 小智',
+      content: '【扣款成功通知】\n老板，所有申报扣款已完成！税收凭证已回传至各客户资料夹。本月全流程任务顺利闭环！',
+      timestamp: new Date(),
+      avatar: 'https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=100&h=100&fit=crop&q=80'
+    }]);
+    setAgentStage('payment_done');
+
+    setIsAutoPlaying(false);
+  };
+
   const handleGenVideo = (type: 'summary' | 'demo') => {
     setVideoStatus({ status: 'generating', type });
     setTimeout(() => {
@@ -499,6 +717,7 @@ export default function App() {
 
         <div className="flex-1 space-y-1">
           <NavItem icon={<FileText size={20} />} label="服务工作台" active={view === 'docs'} onClick={() => setView('docs')} />
+          <NavItem icon={<Sparkles size={20} />} label="记账员工" active={view === 'agent'} onClick={() => setView('agent')} />
           <NavItem icon={<Activity size={20} />} label="监控看板" active={view === 'monitoring'} onClick={() => setView('monitoring')} />
           <NavItem icon={<TrendingUp size={20} />} label="记账工作台" active={view === 'workbench'} onClick={() => setView('workbench')} />
           <NavItem icon={<Users size={20} />} label="客户资料" active={view === 'dashboard'} onClick={() => setView('dashboard')} />
@@ -512,6 +731,130 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 overflow-auto relative">
         <AnimatePresence mode="wait">
+          {view === 'agent' && (
+            <motion.div 
+              key="agent"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col h-full bg-slate-100"
+            >
+              <header className="p-6 bg-white border-b border-slate-200 flex justify-between items-center shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg ring-4 ring-indigo-50">
+                    <Sparkles size={24} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black text-slate-800 tracking-tight">记账数字员工 · 小智</h2>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                      <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest">智能记账引擎实时运行中</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={startAgentDemo}
+                    disabled={isAutoPlaying}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 disabled:opacity-50"
+                  >
+                    {isAutoPlaying ? <Loader2 size={14} className="animate-spin" /> : <Video size={14} />} 自动化演示
+                  </button>
+                  <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+                    <div className="text-[10px] font-bold text-indigo-600 uppercase mb-1">今日自动记账进度</div>
+                    <div className="w-48 h-1.5 bg-indigo-200 rounded-full overflow-hidden">
+                      <div className="w-[95%] h-full bg-indigo-600" />
+                    </div>
+                  </div>
+                </div>
+              </header>
+
+              <div className="flex-1 overflow-y-auto p-8 space-y-6 scrollbar-hide">
+                <div className="max-w-4xl mx-auto space-y-6">
+                  {agentMessages.map((m, idx) => (
+                    <motion.div 
+                      key={m.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className={`flex ${m.sender === 'bot' ? 'justify-start' : 'justify-end'} gap-4`}
+                    >
+                      {m.sender === 'bot' && (
+                        <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm border border-slate-200 flex-shrink-0">
+                          <img src={m.avatar} alt="Agent" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        </div>
+                      )}
+                      <div className={`max-w-[80%] ${m.sender === 'bot' ? 'bg-white border-slate-200 shadow-sm rounded-2xl rounded-tl-none' : 'bg-indigo-600 text-white shadow-indigo-100 rounded-2xl rounded-tr-none shadow-md'} p-6 border`}>
+                        <div className={`text-[10px] font-bold mb-2 ${m.sender === 'bot' ? 'text-indigo-600' : 'text-indigo-100'}`}>
+                          {m.senderName}
+                        </div>
+                        <div className="text-sm leading-relaxed whitespace-pre-wrap font-medium">
+                          {m.content}
+                        </div>
+                        <div className={`text-[9px] mt-3 opacity-50 ${m.sender === 'bot' ? 'text-slate-400' : 'text-indigo-100'}`}>
+                          {m.timestamp.toLocaleTimeString()}
+                        </div>
+                      </div>
+                      {m.sender === 'customer' && (
+                        <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm border border-slate-200 flex-shrink-0">
+                          <img src={m.avatar} alt="User" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        </div>
+                      )}
+                    </motion.div>
+                  ))}
+                  
+                  {isAgentTyping && (
+                    <div className="flex gap-2 p-2">
+                      <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                      <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                    </div>
+                  )}
+
+                  {agentMessages[agentMessages.length - 1].sender === 'bot' && agentStage !== 'payment_done' && (
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="flex justify-center mt-8"
+                    >
+                      <button 
+                        onClick={confirmAgentAction}
+                        className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 flex items-center gap-3 active:scale-95"
+                      >
+                        <CheckCircle2 size={20} />
+                        {agentStage === 'anomaly' ? '确认方案，继续任务' : '扣款指令确认，批量缴纳税款'}
+                      </button>
+                    </motion.div>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-6 bg-white border-t border-slate-200">
+                <div className="max-w-4xl mx-auto flex gap-4">
+                  <div className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center">
+                    <input 
+                      type="text" 
+                      placeholder="您可以直接下达语音或文字指令..." 
+                      className="bg-transparent border-none focus:ring-0 w-full text-sm font-medium"
+                      disabled
+                    />
+                  </div>
+                  <button className="w-14 h-14 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-lg hover:shadow-indigo-100 transition-all">
+                    <Send size={24} />
+                  </button>
+                </div>
+                <div className="max-w-4xl mx-auto mt-4 flex gap-2">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-6">快捷反馈：</span>
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={() => pushPeriodicReport('10th')} className="text-[10px] font-bold text-indigo-600 px-2 py-1 bg-indigo-50 rounded hover:bg-indigo-100 transition-colors">模拟10号申报周报</button>
+                    <button onClick={() => pushPeriodicReport('15th')} className="text-[10px] font-bold text-indigo-600 px-2 py-1 bg-indigo-50 rounded hover:bg-indigo-100 transition-colors">模拟15号结项汇总</button>
+                    <button className="text-[10px] font-bold text-indigo-600 px-2 py-1 bg-indigo-50 rounded hover:bg-indigo-100 transition-colors">查看异常明细</button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {view === 'workbench' && (
             <motion.div 
               key="workbench"
