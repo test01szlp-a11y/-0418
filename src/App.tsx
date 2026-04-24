@@ -340,38 +340,44 @@ export default function App() {
     const target = customers.find(c => c.id === targetId);
     if (!target) return;
 
-    const currentMonth = new Date().getMonth() + 1;
-    const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const nextMonthNum = month === 12 ? 1 : month + 1;
+    const nextMonthYear = month === 12 ? year + 1 : year;
 
     setActiveCustomer(target);
     setMessages([]);
     await new Promise(r => setTimeout(r, 1000));
 
     const demoSteps = [
-      // --- 阶段 1: 开票 ---
+      // --- 阶段 1: 开票模拟（全自动引导） ---
       { sender: 'customer', text: '张老师，帮我开张发票。' },
       { sender: 'bot', text: '好的，系统查询到您本月开票额度还剩 ¥50,000.00 元。请提供您的开票需求：【购方名称】、【开票商品】和【金额信息】。' },
       { sender: 'customer', text: `抬头：${target.name.split(' ')[0]}\n内容：*餐饮服务\n金额：2000元` },
-      { sender: 'bot', text: `已为您提取开票信息：\n- 购方名称：${target.name.split(' ')[0]}\n- 内容：*餐饮服务\n- 金额：¥2,000.00\n确认无误请回复“确认”。` },
+      { sender: 'bot', text: `已为您提取开票信息：\n- 购方名称：${target.name.split(' ')[0]}\n- 内容：*餐饮服务\n- 金额：¥2,000.00\n确认无误请回复“确认”，我将立即生成实时电子发票样板。` },
       { sender: 'customer', text: '确认' },
-      { sender: 'bot', text: '✅ 开票成功！电子发票已同步发送至您的邮箱。', isInvoice: true },
+      { sender: 'bot', text: '✅ 开票成功！系统已为您生成电子发票样板并同步发送至您的预留邮箱。', isInvoice: true },
 
-      // --- 阶段 2: 资料催收 ---
-      { sender: 'bot', text: `【自动催收】${target.contact}您好，今天是 ${currentMonth}月 25 号。系统监测到“${target.name.split(' ')[0]}”本周期的银行流水尚未归档。为了不影响下月申报，请及时上传。` },
-      { sender: 'customer', text: '好的，刚导出来的，发给你。' },
-      { sender: 'bot', text: '收到！Veo 识别引擎正在识别并完成自动归档... ✅ 资料已入库。' },
+      // --- 阶段 2: 资料催收（自动化锚点） ---
+      { sender: 'bot', text: `【自动催收】${target.contact}您好，今天是 ${year}年${month}月 25 号。系统监测到“${target.name.split(' ')[0]}”本周期的银行流水尚未归档。为了不影响下月申报，请及时上传。` },
+      { sender: 'customer', text: '好的，刚导出来的，直接发你看。' },
+      { sender: 'bot', text: '收到！Veo OCR 引擎正在执行毫秒级识别与自动归档操作... ✅ 识别成功，主要支出明细已自动入库。' },
 
-      // --- 阶段 3: 税金确认 ---
-      { sender: 'bot', text: `【申报提醒】${target.contact}早！今天是 ${nextMonth}月 1 号。基于 ${currentMonth}月 经营数据，系统精算结果已出：预计应交增值税：¥120.00元。确认无误请回复“确认”，我将自动完成电子税务局申报。` },
-      { sender: 'customer', text: '确认，申报吧。' },
-      { sender: 'bot', text: '🚀 正在连接电子税务局... 申报已成功提交！' },
+      // --- 阶段 3: 税金确认与申报（跨月联动） ---
+      { sender: 'bot', text: `【申报提醒】${target.contact}早！今天是 ${nextMonthYear}年${nextMonthNum}月 1 号。基于您 ${year}年${month}月 的经营数据，系统精算纳税预评估结果已出：\n- 预计应交增值税：¥60.00\n- 附加税费：¥7.20\n共计：¥67.20。点击确认后我将自动连接电子税务局完成申报。` },
+      { sender: 'customer', text: '好的，确认无误。' },
+      { sender: 'bot', text: '🚀 正在安全连接电子税务局进行全自动化申报... 申报已成功提交！' },
 
-      // --- 阶段 4: 扣款确认 ---
-      { sender: 'bot', text: `【扣款提醒】您的申报已审核通过。${nextMonth}月应缴税金共计 ¥120.00，请回复“确认缴款”以发起在线国库划扣。` },
+      // --- 阶段 4: 扣款确认（闭环终点） ---
+      { sender: 'bot', text: `【扣款通知】您的 ${year}年${month}周期申报已审核通过。应缴税金共计 ¥67.20，请回复“确认缴款”以发起在线国库划扣。` },
       { sender: 'customer', text: '确认缴款' },
-      { sender: 'bot', text: '🔓 支付成功！本业务周期税务工作已圆满闭环。' },
+      { sender: 'bot', text: '🔓 支付成功！这是系统为您自动下载并归档的《税收完税证明》（电子版），请查收。', isReceipt: true },
 
-      // --- 阶段 5: 风险触发 - 关键缓冲回复 ---
+      // --- 阶段 5: 提交本月服务报告 ---
+      { sender: 'bot', text: `${target.contact}，针对您企业本月的财税全生命周期服务已圆满完成。这是为您生成的《月度数字化服务报告》，包含本月申报明细及年度累计经营数据分析。`, isReport: true },
+
+      // --- 阶段 6: 风险触发 - 关键缓冲回复（保留逻辑） ---
       { sender: 'customer', text: '张老师，最近生意太难做了，有没有什么办法能尽可能少交点税？' },
       { sender: 'bot', text: '稍等下，我确认下您企业当前的情况，稍后回复您。', isBuffer: true },
     ];
@@ -393,7 +399,9 @@ export default function App() {
         avatar: step.sender === 'bot' ? BOT_AVATAR : target.avatar,
         content: step.text,
         timestamp: new Date(),
-        isInvoice: (step as any).isInvoice
+        isInvoice: (step as any).isInvoice,
+        isReceipt: (step as any).isReceipt,
+        isReport: (step as any).isReport
       };
 
       setMessages(prev => [...prev, msg]);
@@ -491,7 +499,8 @@ export default function App() {
         timestamp: new Date(),
         isInvoice: (step as any).isInvoice,
         image: (step as any).image,
-        isReceipt: (step as any).isReceipt
+        isReceipt: (step as any).isReceipt,
+        isReport: (step as any).isReport
       };
       setMessages(prev => [...prev, msg]);
       if (step.sender === 'customer') {
@@ -1475,9 +1484,99 @@ export default function App() {
                             </div>
                             <div className="leading-relaxed whitespace-pre-wrap">{m.content}</div>
                             {m.isInvoice && (
-                              <div className="mt-2 p-3 bg-slate-100 border border-slate-200 rounded-lg text-[10px]">
-                                <span className="font-bold text-indigo-600 block mb-1">发票回传节点</span>
-                                <p className="text-slate-500 italic">系统已自动识别需求并回传发票</p>
+                              <div className="mt-3 p-4 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl">
+                                <div className="flex justify-between items-center mb-3">
+                                  <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                                    <FileText size={14} className="text-indigo-600" />
+                                    电子发票样板
+                                  </span>
+                                  <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">验证通过</span>
+                                </div>
+                                <div className="space-y-1.5 opacity-60">
+                                  <div className="h-2 bg-slate-200 rounded w-3/4"></div>
+                                  <div className="h-2 bg-slate-200 rounded w-1/2"></div>
+                                  <div className="h-2 bg-slate-200 rounded w-5/6"></div>
+                                </div>
+                                <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-end">
+                                  <div className="text-[10px] text-slate-400 font-medium">购买方：{activeCustomer?.name.split(' ')[0]}</div>
+                                  <div className="text-sm font-black text-indigo-600 italic">¥2,000.00</div>
+                                </div>
+                              </div>
+                            )}
+                            {m.isReceipt && (
+                              <div className="mt-3 p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl">
+                                <div className="flex items-center gap-3 mb-3">
+                                  <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100">
+                                    <ShieldCheck size={18} />
+                                  </div>
+                                  <div className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">税收完税证明</div>
+                                </div>
+                                <div className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                                  兹证明企业已按期完成本周期纳税义务，国库扣款已成功。系统已将电子证明文件备份至云端。
+                                </div>
+                                <button className="mt-4 w-full py-2 bg-white border border-indigo-100 text-indigo-600 rounded-lg text-[10px] font-bold hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2">
+                                  <Download size={12} /> 下载电子版
+                                </button>
+                              </div>
+                            )}
+                            {m.isReport && (
+                              <div className="mt-3 p-5 bg-gradient-to-br from-indigo-600 to-slate-800 rounded-2xl text-white shadow-xl shadow-indigo-100">
+                                <div className="flex justify-between items-start mb-6">
+                                  <div>
+                                    <div className="text-[10px] font-black text-indigo-200 uppercase tracking-[0.2em] mb-1">Monthly Service Report</div>
+                                    <div className="text-lg font-bold">月度服务报告</div>
+                                  </div>
+                                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-md border border-white/20">
+                                    <Sparkles size={20} className="text-white" />
+                                  </div>
+                                </div>
+                                
+                                <div className="space-y-5">
+                                  <div>
+                                    <div className="text-[10px] font-bold text-white/50 mb-2 uppercase flex items-center gap-2">
+                                      <div className="w-1 h-3 bg-indigo-400 rounded-full"></div>
+                                      本月经营数据
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div className="p-3 bg-white/5 rounded-xl border border-white/10">
+                                        <div className="text-[9px] text-white/40 mb-1">申报税种</div>
+                                        <div className="text-[11px] font-bold">增、城、教、地</div>
+                                      </div>
+                                      <div className="p-3 bg-white/5 rounded-xl border border-white/10">
+                                        <div className="text-[9px] text-white/40 mb-1">已申报税额</div>
+                                        <div className="text-[14px] font-black italic">¥67.20</div>
+                                      </div>
+                                      <div className="p-3 bg-white/5 rounded-xl border border-white/10 col-span-2">
+                                        <div className="text-[9px] text-white/40 mb-1">本月开票总额</div>
+                                        <div className="text-xs font-bold leading-none mt-1">¥2,000.00</div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <div className="text-[10px] font-bold text-white/50 mb-2 uppercase flex items-center gap-2">
+                                      <div className="w-1 h-3 bg-indigo-400 rounded-full"></div>
+                                      本年累计经营数据
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div className="p-3 bg-indigo-500/20 rounded-xl border border-white/10">
+                                        <div className="text-[9px] text-indigo-200/50 mb-1">本年累计税额</div>
+                                        <div className="text-sm font-black">¥4,740.00</div>
+                                      </div>
+                                      <div className="p-3 bg-white/5 rounded-xl border border-white/10">
+                                        <div className="text-[9px] text-white/40 mb-1">本年累计开票</div>
+                                        <div className="text-sm font-black">¥158,000.00</div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                <div className="mt-6 pt-4 border-t border-white/10 flex justify-between items-center">
+                                  <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                                    <CheckCircle2 size={12} /> 全部合规达标
+                                  </span>
+                                  <button className="text-[10px] font-bold bg-white text-indigo-600 px-3 py-1.5 rounded-lg">查看详情</button>
+                                </div>
                               </div>
                             )}
                             <div className={`text-[8px] mt-2 text-right opacity-60 ${m.sender === 'bot' ? 'text-slate-500' : 'text-slate-300'}`}>

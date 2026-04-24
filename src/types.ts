@@ -27,4 +27,5 @@ export interface Message {
   isInvoice?: boolean;
   image?: string;
   isReceipt?: boolean;
+  isReport?: boolean;
 }
